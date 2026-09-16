@@ -15,9 +15,51 @@
         <div class="admin-acoes"><p>{{ produtos|length }} produto(s) cadastrado(s)</p><a href="{{ url_for('admin_novo_produto') }}" class="btn-comprar admin-novo">+ Novo produto</a></div>
         <section class="admin-tabela-wrap">
             <table class="admin-tabela"><thead><tr><th>Produto</th><th>Categoria</th><th>Preço</th><th>Estoque</th><th>Ação</th></tr></thead><tbody>
-            {% for produto in produtos %}<tr><td><strong>{{ produto.nome }}</strong></td><td>{{ categorias.get(produto.categoria, (produto.categoria, ''))[0] }}</td><td>R$ {{ "%.2f"|format(produto.preco) }}</td><td class="{{ 'estoque-baixo' if produto.estoque < 3 else '' }}">{{ produto.estoque }}{% if produto.estoque < 3 %} · baixo{% endif %}</td><td><form method="post" action="{{ url_for('admin_excluir_produto', produto_id=produto.id) }}" onsubmit="return confirm('Excluir este produto?')"><button class="btn-excluir" type="submit">Excluir</button></form></td></tr>{% else %}<tr><td colspan="5">Nenhum produto cadastrado.</td></tr>{% endfor %}
+            {% for produto in produtos %}<tr><td><strong>{{ produto.nome }}</strong></td><td>{{ categorias.get(produto.categoria, (produto.categoria, ''))[0] }}</td><td>R$ {{ "%.2f"|format(produto.preco) }}</td><td class="{{ 'estoque-baixo' if produto.estoque < 3 else '' }}">{{ produto.estoque }}{% if produto.estoque < 3 %} · baixo{% endif %}</td><td><button class="btn-excluir" type="button" onclick="abrirConfirmacao('{{ produto.id }}', {{ produto.nome|tojson }})">Excluir</button></td></tr>{% else %}<tr><td colspan="5">Nenhum produto cadastrado.</td></tr>{% endfor %}
             </tbody></table>
         </section>
     </main>
+
+    <div id="modal-exclusao" class="modal-admin-overlay" aria-hidden="true">
+        <section class="modal-admin" role="dialog" aria-modal="true" aria-labelledby="modal-exclusao-titulo">
+            <button class="modal-admin-fechar" type="button" onclick="fecharConfirmacao()" aria-label="Fechar">&times;</button>
+            <div class="modal-admin-icone">!</div>
+            <p class="modal-admin-kicker">ATENÇÃO</p>
+            <h2 id="modal-exclusao-titulo">Excluir produto?</h2>
+            <p class="modal-admin-texto">Você está prestes a remover <strong id="modal-produto-nome"></strong>. Essa ação não poderá ser desfeita.</p>
+            <div class="modal-admin-acoes">
+                <button class="btn-modal-cancelar" type="button" onclick="fecharConfirmacao()">Cancelar</button>
+                <form id="form-exclusao" method="post"><button class="btn-modal-excluir" type="submit">Sim, excluir</button></form>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const modalExclusao = document.getElementById('modal-exclusao');
+        const nomeProdutoModal = document.getElementById('modal-produto-nome');
+        const formExclusao = document.getElementById('form-exclusao');
+
+        function abrirConfirmacao(id, nome) {
+            nomeProdutoModal.textContent = nome;
+            formExclusao.action = `/admin/produtos/${id}/excluir`;
+            modalExclusao.classList.add('ativo');
+            modalExclusao.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-aberto');
+        }
+
+        function fecharConfirmacao() {
+            modalExclusao.classList.remove('ativo');
+            modalExclusao.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('modal-aberto');
+        }
+
+        modalExclusao.addEventListener('click', (evento) => {
+            if (evento.target === modalExclusao) fecharConfirmacao();
+        });
+
+        document.addEventListener('keydown', (evento) => {
+            if (evento.key === 'Escape') fecharConfirmacao();
+        });
+    </script>
 </body>
 </html>
