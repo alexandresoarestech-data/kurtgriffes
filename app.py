@@ -1,10 +1,5 @@
-from flask import Flask, render_template
-import requests
 import csv
 import os
-from io import StringIO
-import os
-
 import sqlite3
 from io import StringIO
 from pathlib import Path
@@ -183,7 +178,11 @@ def admin_novo_produto():
         categoria = normalizar_categoria(request.form.get("categoria"))
         preco = converter_preco(request.form.get("preco"))
         cores = request.form.get("cores", "").strip()
-        estoque = max(0, int(request.form.get("estoque", 0) or 0))
+        try:
+            estoque = max(0, int(request.form.get("estoque", 0) or 0))
+        except (TypeError, ValueError):
+            flash("O estoque deve ser um número inteiro maior ou igual a zero.", "erro")
+            return render_template("admin_novo.html", categorias=CATEGORIAS)
         if not nome:
             flash("Informe o nome do produto.", "erro")
             return render_template("admin_novo.html", categorias=CATEGORIAS)
@@ -227,6 +226,12 @@ def admin_excluir_produto(produto_id):
         banco.commit()
     flash("Produto removido.", "sucesso")
     return redirect(url_for("admin_produtos"))
+
+
+@app.errorhandler(413)
+def arquivo_muito_grande(_erro):
+    flash("As imagens ultrapassam o limite de 8 MB.", "erro")
+    return redirect(url_for("admin_novo_produto")), 413
 
 
 inicializar_banco()
