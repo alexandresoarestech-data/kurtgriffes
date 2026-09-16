@@ -1,0 +1,6 @@
+venv/
+__pycache__/
+*.pyc
+loja.db
+.env
+static/imagens/produtos/admin-*/

@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kurt Griffes | Loja Oficial</title>
+    <meta name="description" content="Kurt Griffes: moda masculina, atitude e estilo. Confira nossa coleção.">
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    
+    <!-- Importando fontes do Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Sedgwick+Ave+Display&display=swap" rel="stylesheet">
+    
+    <!-- Conectando o arquivo de estilos CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <!-- CABEÇALHO INTERATIVO -->
+    <header class="cabecalho">
+        <button class="botao-menu" type="button" onclick="alternarMenu()" aria-label="Abrir menu">&#9776;</button>
+        <!-- Ícone de lupa com evento para abrir a barra de pesquisa -->
+        <div class="icone-header" onclick="alternarBusca()" style="cursor: pointer;">
+            <img src="{{ url_for('static', filename='imagens/icons/icon_lupa.png') }}" alt="Pesquisar" class="icone-img">
+        </div>
+        
+        <div class="logo">
+            <img src="{{ url_for('static', filename='imagens/icons/coroa.png') }}" alt="Coroa Kurt Griffes" class="logo-coroa">
+            <span>KURT GRIFFES</span>
+        </div>
+        
+        <!-- Ícone de sacola com evento para abrir a gaveta do carrinho -->
+        <div class="icone-header carrinho" onclick="abrirCarrinhoLateral()" style="cursor: pointer;">
+            <img src="{{ url_for('static', filename='imagens/icons/icon_carrinho.png') }}" alt="Carrinho" class="icone-img">
+            <span id="contador-carrinho">0</span>
+        </div>
+    </header>
+
+    <div id="menu-overlay" class="menu-overlay" onclick="alternarMenu()"></div>
+    <aside id="menu-lateral" class="menu-lateral" aria-label="Navegação e filtros">
+        <button class="menu-fechar" type="button" onclick="alternarMenu()" aria-label="Fechar menu">&times;</button>
+        <p class="menu-kicker">KURT GRIFFES</p>
+        <h2>Encontre seu estilo</h2>
+        <nav class="menu-links">
+            <a href="#novidades" onclick="alternarMenu()">Novidades</a>
+            {% for chave, cat in categorias.items() %}<a href="#categoria-{{ chave }}" onclick="alternarMenu()">{{ cat.titulo }}</a>{% endfor %}
+            <a href="#ofertas" onclick="alternarMenu()">Ofertas</a>
+            <a href="{{ url_for('admin_login') }}">Área do administrador</a>
+        </nav>
+    </aside>
+
+    <section class="banner-destaques" aria-label="Destaques da loja">
+        <div class="banner-slide ativo"><p>COLEÇÃO 2026</p><h1>Vista sua atitude.</h1><span>Peças selecionadas para quem não passa despercebido.</span></div>
+        <div class="banner-slide"><p>ESTILO SEM DESCULPAS</p><h1>Seu próximo look começa aqui.</h1><span>Novidades com envio para todo o Brasil.</span></div>
+        <div class="banner-slide"><p>ATENDIMENTO DIRETO</p><h1>Compre pelo WhatsApp.</h1><span>Escolha suas peças e finalize com praticidade.</span></div>
+        <div class="banner-pontos"><button type="button" class="banner-ponto ativo" onclick="irParaBanner(0)" aria-label="Banner 1"></button><button type="button" class="banner-ponto" onclick="irParaBanner(1)" aria-label="Banner 2"></button><button type="button" class="banner-ponto" onclick="irParaBanner(2)" aria-label="Banner 3"></button></div>
+    </section>
+
+    <!-- BARRA DE PESQUISA EXPANSÍVEL -->
+    <div id="barra-pesquisa-container" class="barra-pesquisa-wrapper" style="display: none;">
+        <div class="container-pesquisa-interno">
+            <input type="text" id="input-busca-produto" placeholder="Digite o nome do produto que você procura..." oninput="filtrarProdutos(this.value)">
+            <button onclick="alternarBusca()" class="btn-fechar-busca">&times;</button>
+        </div>
+    </div>
+
+    <!-- ÁREA PRINCIPAL -->
+    <main class="container">
+        
+        <!-- SEÇÃO 1: NOVIDADES (EXIBE TODOS OS PRODUTOS) -->
+        <section id="novidades" class="secao-categoria">
+            <div class="cabecalho-secao">
+                <div>
+                    <h2>{{ novidades.titulo }}</h2>
+                    <p>{{ novidades.subtitulo }}</p>
+                </div>
+                <a href="#" class="link-ver-todos">Ver todos ></a>
+            </div>
+
+            <div class="grid-produtos">
+                {% for produto in novidades.itens %}
+                <!-- Verifica pelo nome se é calçado -->
+                {% set e_calcado = 'sapato' in produto.nome|lower or 'tênis' in produto.nome|lower or 'tenis' in produto.nome|lower %}
+                
+                <article class="card-produto">
+                    <div class="imagem-container">
+                        <span class="tag-vendo">🔥 Top Vendas</span>
+                        <span class="tag-novo">NOVO</span>
+                        
+                        <img class="img-produto" id="img-nov-{{ produto.id }}" src="{{ url_for('static', filename=produto.imagem_capa) }}" alt="{{ produto.nome }}" data-imagens='{{ produto.todas_imagens | tojson }}'>
+                        
+                        {% if produto.todas_imagens | length > 1 %}
+                        <button class="btn-carrossel btn-esq" onclick="mudarFotoSlide('nov-{{ produto.id }}', -1)">&#10094;</button>
+                        <button class="btn-carrossel btn-dir" onclick="mudarFotoSlide('nov-{{ produto.id }}', 1)">&#10095;</button>
+                        {% endif %}
+                    </div>
+
+                    <div class="info-produto">
+                        <h3 class="titulo-produto">{{ produto.nome }}</h3>
+
+                        <div class="opcoes-produto">
+                            {% if produto.lista_cores %}
+                            <div class="seletor">
+                                <label for="cor-nov-{{ produto.id }}">Cor:</label>
+                                <select id="cor-nov-{{ produto.id }}" class="select-variacao" onchange="mudarImagem('nov-{{ produto.id }}', this.value)">
+                                    <option value="">Escolher</option>
+                                    {% for cor in produto.lista_cores %}
+                                    <option value="{{ cor }}">{{ cor }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% endif %}
+
+                            <div class="seletor">
+                                <label for="tam-nov-{{ produto.id }}">Tam:</label>
+                                <select id="tam-nov-{{ produto.id }}" class="select-variacao">
+                                    <option value="">Escolher</option>
+                                    {% if e_calcado %}
+                                        <option value="37">37</option>
+                                        <option value="38">38</option>
+                                        <option value="39">39</option>
+                                        <option value="40">40</option>
+                                        <option value="41">41</option>
+                                        <option value="42">42</option>
+                                        <option value="43">43</option>
+                                        <option value="44">44</option>
+                                    {% else %}
+                                        <option value="P">P</option>
+                                        <option value="M">M</option>
+                                        <option value="G">G</option>
+                                        <option value="GG">GG</option>
+                                    {% endif %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <p class="preco-produto">R$ {{ "%.2f"|format(produto.preco) }}</p>
+                        <p class="parcelas-produto">{{ produto.parcelas }}</p>
+                        
+                        <button class="btn-comprar" 
+                            data-nome="{{ produto.nome }}"
+                            data-preco="{{ produto.preco }}"
+                            data-parcelas="{{ produto.parcelas }}"
+                            data-img-id="img-nov-{{ produto.id }}"
+                            data-cor-id="cor-nov-{{ produto.id }}"
+                            data-tam-id="tam-nov-{{ produto.id }}"
+                            data-cores='{{ produto.lista_cores | tojson }}'
+                            data-is-calcado="{{ 'true' if e_calcado else 'false' }}"
+                            onclick="abrirModalPorElemento(this)">
+                            Adicionar ao carrinho
+                        </button>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- SEÇÕES SEPARADAS POR CATEGORIA -->
+        {% for chave, cat in categorias.items() %}
+        <section id="categoria-{{ chave }}" class="secao-categoria">
+            <div class="cabecalho-secao">
+                <div>
+                    <h2>{{ cat.titulo }}</h2>
+                    <p>{{ cat.subtitulo }}</p>
+                </div>
+                <a href="#" class="link-ver-todos">Ver todos ></a>
+            </div>
+
+            <div class="grid-produtos">
+                {% for produto in cat.itens %}
+                <!-- Verifica pela chave da categoria ou nome se é calçado -->
+                {% set e_calcado = 'calcado' in chave|lower or 'sapato' in produto.nome|lower or 'tênis' in produto.nome|lower or 'tenis' in produto.nome|lower %}
+                
+                <article class="card-produto">
+                    <div class="imagem-container">
+                        <span class="tag-vendo">🔥 Top Vendas</span>
+                        <span class="tag-novo">NOVO</span>
+                        
+                        <img class="img-produto" id="img-cat-{{ chave }}-{{ produto.id }}" src="{{ url_for('static', filename=produto.imagem_capa) }}" alt="{{ produto.nome }}" data-imagens='{{ produto.todas_imagens | tojson }}'>
+                        
+                        {% if produto.todas_imagens | length > 1 %}
+                        <button class="btn-carrossel btn-esq" onclick="mudarFotoSlide('cat-{{ chave }}-{{ produto.id }}', -1)">&#10094;</button>
+                        <button class="btn-carrossel btn-dir" onclick="mudarFotoSlide('cat-{{ chave }}-{{ produto.id }}', 1)">&#10095;</button>
+                        {% endif %}
+                    </div>
+
+                    <div class="info-produto">
+                        <h3 class="titulo-produto">{{ produto.nome }}</h3>
+
+                        <div class="opcoes-produto">
+                            {% if produto.lista_cores %}
+                            <div class="seletor">
+                                <label for="cor-cat-{{ chave }}-{{ produto.id }}">Cor:</label>
+                                <select id="cor-cat-{{ chave }}-{{ produto.id }}" class="select-variacao" onchange="mudarImagem('cat-{{ chave }}-{{ produto.id }}', this.value)">
+                                    <option value="">Escolher</option>
+                                    {% for cor in produto.lista_cores %}
+                                    <option value="{{ cor }}">{{ cor }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% endif %}
+
+                            <div class="seletor">
+                                <label for="tam-cat-{{ chave }}-{{ produto.id }}">Tam:</label>
+                                <select id="tam-cat-{{ chave }}-{{ produto.id }}" class="select-variacao">
+                                    <option value="">Escolher</option>
+                                    {% if e_calcado %}
+                                        <option value="37">37</option>
+                                        <option value="38">38</option>
+                                        <option value="39">39</option>
+                                        <option value="40">40</option>
+                                        <option value="41">41</option>
+                                        <option value="42">42</option>
+                                        <option value="43">43</option>
+                                        <option value="44">44</option>
+                                    {% else %}
+                                        <option value="P">P</option>
+                                        <option value="M">M</option>
+                                        <option value="G">G</option>
+                                        <option value="GG">GG</option>
+                                    {% endif %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <p class="preco-produto">R$ {{ "%.2f"|format(produto.preco) }}</p>
+                        <p class="parcelas-produto">{{ produto.parcelas }}</p>
+                        
+                        <button class="btn-comprar" 
+                            data-nome="{{ produto.nome }}"
+                            data-preco="{{ produto.preco }}"
+                            data-parcelas="{{ produto.parcelas }}"
+                            data-img-id="img-cat-{{ chave }}-{{ produto.id }}"
+                            data-cor-id="cor-cat-{{ chave }}-{{ produto.id }}"
+                            data-tam-id="tam-cat-{{ chave }}-{{ produto.id }}"
+                            data-cores='{{ produto.lista_cores | tojson }}'
+                            data-is-calcado="{{ 'true' if e_calcado else 'false' }}"
+                            onclick="abrirModalPorElemento(this)">
+                            Adicionar ao carrinho
+                        </button>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+        {% endfor %}
+
+    </main>
+
+    <!-- SEÇÃO DE CHAMADA PARA AÇÃO (CTA) -->
+    <section class="cta-secao">
+        <h2>Pronto pra vestir sua <span class="destaque-gold">atitude</span>?</h2>
+        <p>Junte-se a milhares de visionários que já transformaram seu estilo.</p>
+        <button class="btn-explorar">Explorar Coleção</button>
+    </section>
+
+    <!-- RODAPÉ (FOOTER) -->
+    <footer class="rodape">
+        <div class="container-rodape">
+            <div class="coluna-rodape">
+                <div class="logo-rodape">
+                    <img src="{{ url_for('static', filename='imagens/icons/logo-rodape.png') }}" alt="Logo Kurt Griffes - Visão de Cria">
+                </div>
+                <p>A Kurt Griffes é mais que uma marca de roupas; é um símbolo de ambição e superação. Da quebrada pro mundo, vestindo quem busca conquistar sem esquecer suas raízes.</p>
+            </div>
+            
+            <div class="coluna-rodape">
+                <h4>Links Rápidos</h4>
+                <ul>
+                    <li><a href="#">Todos os Produtos</a></li>
+                </ul>
+            </div>
+            
+            <div class="coluna-rodape">
+                <h4>Atendimento</h4>
+                <ul>
+                    <li><a href="https://wa.me/5511919877629?text=Ol%C3%A1!%20Gostaria%20de%20atendimento." target="_blank">WhatsApp</a></li>
+                    <li><a href="mailto:contato@kurtgriffes.com">E-mail</a></li>
+                    <li><a href="#">Trocas e devoluções</a></li>
+                </ul>
+            </div>
+
+            <div class="coluna-rodape">
+                <h4>Informações</h4>
+                <ul>
+                    <li><a href="#">Política de privacidade</a></li>
+                    <li><a href="#">Termos de uso</a></li>
+                    <li><a href="#">Frete e entrega</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="direitos">
+            <p>© 2026 Kurt Griffes. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- MODAL DE ADICIONAR AO CARRINHO -->
+    <div id="modal-carrinho" class="modal-overlay">
+        <div class="modal-conteudo">
+            <button class="modal-fechar" onclick="fecharModal()">&times;</button>
+            
+            <!-- ETAPA 1: SELEÇÃO -->
+            <div id="modal-etapa-selecao">
+                <h3>Adicionar ao Carrinho</h3>
+                
+                <div class="modal-info-produto">
+                    <img id="modal-img" src="" alt="Produto">
+                    <div>
+                        <h4 id="modal-titulo">Nome do Produto</h4>
+                        <p id="modal-preco" class="modal-preco-destaque">R$ 0,00</p>
+                        <p id="modal-parcelas" class="modal-sub-texto">ou 12x de R$ 0,00 sem juros</p>
+                    </div>
+                </div>
+
+                <div class="modal-grupo">
+                    <label>Tamanhos Disponíveis *</label>
+                    <div class="modal-tamanhos-grid">
+                        <!-- Gerado via Javascript -->
+                    </div>
+                </div>
+
+                <div class="modal-grupo" id="modal-grupo-cor" style="display: none;">
+                    <label>Cor Selecionada *</label>
+                    <div class="modal-cores-grid" id="modal-cores-container">
+                        <!-- Preenchido via JavaScript -->
+                    </div>
+                </div>
+
+                <div class="modal-grupo">
+                    <label>Quantidade</label>
+                    <div class="modal-qtd-box">
+                        <button type="button" onclick="alterarQtd(-1)">-</button>
+                        <span id="modal-qtd">1</span>
+                        <button type="button" onclick="alterarQtd(1)">+</button>
+                    </div>
+                </div>
+
+                <p id="modal-aviso" class="modal-aviso-erro"></p>
+
+                <button type="button" class="btn-modal-confirmar" onclick="confirmarAdicaoCarrinho()">
+                    Adicionar ao Carrinho
+                </button>
+            </div>
+
+            <!-- ETAPA 2: SUCESSO -->
+            <div id="modal-etapa-sucesso" style="display: none; text-align: center; padding: 15px 0;">
+                <div class="alerta-sucesso-box">
+                    <div class="icone-check">✓</div>
+                    <div>
+                        <h4>Produto adicionado!</h4>
+                        <p>O que deseja fazer agora?</p>
+                    </div>
+                </div>
+                <div class="modal-botoes-acao">
+                    <button type="button" class="btn-acao-cinza" onclick="fecharModal()">Continuar Comprando</button>
+                    <button type="button" class="btn-acao-ouro" onclick="irParaCheckoutWhatsApp()">Ver Carrinho</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- GAVETA LATERAL DO CARRINHO (APENAS UMA VEZ) -->
+    <div id="overlay-carrinho" class="carrinho-overlay" onclick="fecharCarrinhoLateral()"></div>
+    <div id="gaveta-carrinho" class="carrinho-gaveta">
+        <div class="carrinho-cabecalho">
+            <div class="carrinho-titulo-box">
+                <img src="{{ url_for('static', filename='imagens/icons/icon_carrinho.png') }}" alt="Carrinho" class="carrinho-icone-png">
+                <div>
+                    <h3>Seu Carrinho</h3>
+                    <p id="carrinho-qtd-itens">0 itens</p>
+                </div>
+            </div>
+            <button class="carrinho-fechar" onclick="fecharCarrinhoLateral()">&times;</button>
+        </div>
+
+        <!-- Lista de Produtos Adicionados no Carrinho -->
+        <div class="carrinho-corpo" id="carrinho-lista-produtos">
+            <p class="carrinho-vazio-msg">Seu carrinho está vazio.</p>
+        </div>
+
+        <!-- Rodapé do Carrinho -->
+        <div class="carrinho-rodape">
+            <div class="carrinho-subtotal-box">
+                <span>Subtotal</span>
+                <span id="carrinho-subtotal-valor">R$ 0,00</span>
+            </div>
+            <p class="carrinho-frete-texto">Frete calculado no checkout</p>
+            <label class="pagamento-label" for="forma-pagamento">Forma de pagamento</label>
+            <select id="forma-pagamento" class="select-pagamento">
+                <option value="pix">Pix</option>
+                <option value="cartao">Cartão de crédito</option>
+                <option value="boleto">Boleto bancário</option>
+            </select>
+            <p id="pix-chave" class="pix-chave">Chave Pix: {{ config['PIX_KEY'] }}</p>
+            
+            <button type="button" class="btn-finalizar-compra" onclick="finalizarCompraWhatsApp()">
+                Finalizar Compra &rarr;
+            </button>
+            
+            <button type="button" class="btn-continuar-comprando" onclick="fecharCarrinhoLateral()">
+                Continuar Comprando
+            </button>
+
+            <div class="carrinho-pagamentos">
+                <span>Aceitamos:</span>
+                <div class="badges-pagamento">
+                    <span>VISA</span>
+                    <span>MASTER</span>
+                    <span class="badge-pix-gold">PIX</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script>
+        const indicesAtuais = {};
+        let bannerAtual = 0;
+
+        function alternarMenu() {
+            document.getElementById('menu-lateral').classList.toggle('ativo');
+            document.getElementById('menu-overlay').classList.toggle('ativo');
+        }
+
+        function irParaBanner(indice) {
+            const slides = document.querySelectorAll('.banner-slide');
+            const pontos = document.querySelectorAll('.banner-ponto');
+            bannerAtual = indice;
+            slides.forEach((slide, index) => slide.classList.toggle('ativo', index === indice));
+            pontos.forEach((ponto, index) => ponto.classList.toggle('ativo', index === indice));
+        }
+
+        setInterval(() => irParaBanner((bannerAtual + 1) % 3), 5500);
+
+        function mudarFotoSlide(produtoId, direcao) {
+            const imgElement = document.getElementById('img-' + produtoId);
+            const selectCor = document.getElementById('cor-' + produtoId);
+            const todasImagens = JSON.parse(imgElement.getAttribute('data-imagens'));
+
+            if (!indicesAtuais[produtoId]) {
+                indicesAtuais[produtoId] = 0;
+            }
+
+            indicesAtuais[produtoId] += direcao;
+
+            if (indicesAtuais[produtoId] >= todasImagens.length) {
+                indicesAtuais[produtoId] = 0;
+            } else if (indicesAtuais[produtoId] < 0) {
+                indicesAtuais[produtoId] = todasImagens.length - 1;
+            }
+
+            const caminhoAtual = todasImagens[indicesAtuais[produtoId]];
+
+            imgElement.style.opacity = 0;
+            setTimeout(() => {
+                imgElement.src = '/static/' + caminhoAtual;
+                imgElement.style.opacity = 1;
+            }, 250);
+
+            if (selectCor) {
+                for (let i = 0; i < selectCor.options.length; i++) {
+                    const nomeCorOption = selectCor.options[i].value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '_');
+                    
+                    if (nomeCorOption && caminhoAtual.toLowerCase().includes(nomeCorOption)) {
+                        selectCor.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+        }
+
+        function mudarImagem(produtoId, corSelecionada) {
+            if (!corSelecionada) return;
+
+            const imgElement = document.getElementById('img-' + produtoId);
+            const todasImagens = JSON.parse(imgElement.getAttribute('data-imagens'));
+
+            let termoBusca = corSelecionada.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '_');
+
+            let indexEncontrado = todasImagens.findIndex(img => img.toLowerCase().includes('cor_' + termoBusca) || img.toLowerCase().includes('/' + termoBusca));
+
+            if (indexEncontrado === -1) {
+                indexEncontrado = todasImagens.findIndex(img => img.toLowerCase().includes(termoBusca));
+            }
+
+            if (indexEncontrado !== -1) {
+                indicesAtuais[produtoId] = indexEncontrado; 
+
+                imgElement.style.opacity = 0; 
+                setTimeout(() => {
+                    imgElement.src = '/static/' + todasImagens[indexEncontrado];
+                    imgElement.style.opacity = 1;
+                }, 250);
+            }
+        }
+
+        let tamanhoSelecionado = '';
+        let corSelecionadaModal = '';
+        let quantidadeAtual = 1;
+
+        function abrirModalPorElemento(botao) {
+            const nome = botao.getAttribute('data-nome');
+            const preco = botao.getAttribute('data-preco');
+            const parcelas = botao.getAttribute('data-parcelas');
+            const imgId = botao.getAttribute('data-img-id');
+            const corId = botao.getAttribute('data-cor-id');
+            const tamId = botao.getAttribute('data-tam-id');
+            const coresJson = botao.getAttribute('data-cores');
+            const isCalcado = botao.getAttribute('data-is-calcado') === 'true'; 
+
+            const imgElement = document.getElementById(imgId);
+            const imagemSrc = imgElement ? imgElement.src : '';
+
+            abrirModalCarrinho(nome, preco, parcelas, imagemSrc, corId, tamId, coresJson, isCalcado);
+        }
+
+        function abrirModalCarrinho(nome, preco, parcelas, imagemSrc, idSelectCor, idSelectTam, listaCoresJson, isCalcado) {
+            const modal = document.getElementById('modal-carrinho');
+            
+            document.getElementById('modal-etapa-selecao').style.display = 'block';
+            document.getElementById('modal-etapa-sucesso').style.display = 'none';
+
+            const selectCor = document.getElementById(idSelectCor);
+            const selectTam = document.getElementById(idSelectTam);
+
+            const corEscolhidaCard = selectCor && selectCor.value ? selectCor.value : '';
+            const tamEscolhidoCard = selectTam && selectTam.value && selectTam.value !== 'Escolher' ? selectTam.value : '';
+
+            document.getElementById('modal-titulo').innerText = nome;
+            document.getElementById('modal-preco').innerText = 'R$ ' + parseFloat(preco).toFixed(2).replace('.', ',');
+            document.getElementById('modal-parcelas').innerText = parcelas;
+            document.getElementById('modal-img').src = imagemSrc;
+
+            const grupoCor = document.getElementById('modal-grupo-cor');
+            const containerCores = document.getElementById('modal-cores-container');
+            containerCores.innerHTML = '';
+            corSelecionadaModal = '';
+
+            let listaCores = [];
+            try {
+                listaCores = JSON.parse(listaCoresJson.replace(/&quot;/g, '"').replace(/&#34;/g, '"'));
+            } catch(e) {
+                listaCores = [];
+            }
+
+            if (listaCores && listaCores.length > 0) {
+                grupoCor.style.display = 'block';
+                listaCores.forEach(cor => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'btn-cor-modal';
+                    btn.innerText = cor;
+                    btn.onclick = () => selecionarCorModal(btn, cor);
+                    containerCores.appendChild(btn);
+                });
+
+                if (corEscolhidaCard && corEscolhidaCard !== 'Escolher') {
+                    const btnCorMatch = Array.from(containerCores.children).find(b => b.innerText === corEscolhidaCard);
+                    if (btnCorMatch) selecionarCorModal(btnCorMatch, corEscolhidaCard);
+                }
+            } else {
+                grupoCor.style.display = 'none';
+                corSelecionadaModal = 'Padrão'; 
+            }
+
+            const containerTamanhos = document.querySelector('.modal-tamanhos-grid');
+            containerTamanhos.innerHTML = ''; 
+            
+            let listaTamanhos = isCalcado ? ['37', '38', '39', '40', '41', '42', '43', '44'] : ['P', 'M', 'G', 'GG'];
+            
+            listaTamanhos.forEach(tam => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn-tam';
+                btn.innerText = tam;
+                btn.onclick = () => selecionarTamanhoModal(btn, tam);
+                containerTamanhos.appendChild(btn);
+            });
+
+            tamanhoSelecionado = '';
+            if(tamEscolhidoCard) {
+                const btnTamMatch = Array.from(document.querySelectorAll('.btn-tam')).find(b => b.innerText === tamEscolhidoCard);
+                if(btnTamMatch) selecionarTamanhoModal(btnTamMatch, tamEscolhidoCard);
+            }
+
+            quantidadeAtual = 1;
+            document.getElementById('modal-qtd').innerText = quantidadeAtual;
+            document.getElementById('modal-aviso').innerText = '';
+
+            modal.style.display = 'flex';
+        }
+
+        function fecharModal() {
+            document.getElementById('modal-carrinho').style.display = 'none';
+        }
+
+        function selecionarTamanhoModal(botao, tamanho) {
+            document.querySelectorAll('.btn-tam').forEach(b => b.classList.remove('selecionado'));
+            botao.classList.add('selecionado');
+            tamanhoSelecionado = tamanho;
+            document.getElementById('modal-aviso').innerText = '';
+        }
+
+        function selecionarCorModal(botao, cor) {
+            document.querySelectorAll('.btn-cor-modal').forEach(b => b.classList.remove('selecionado'));
+            botao.classList.add('selecionado');
+            corSelecionadaModal = cor;
+            document.getElementById('modal-aviso').innerText = '';
+        }
+
+        function alterarQtd(valor) {
+            quantidadeAtual += valor;
+            if (quantidadeAtual < 1) quantidadeAtual = 1;
+            document.getElementById('modal-qtd').innerText = quantidadeAtual;
+        }
+
+        function confirmarAdicaoCarrinho() {
+            const grupoCor = document.getElementById('modal-grupo-cor');
+            
+            if (grupoCor.style.display !== 'none' && !corSelecionadaModal) {
+                document.getElementById('modal-aviso').innerText = 'Selecione uma cor para continuar';
+                return;
+            }
+            if (!tamanhoSelecionado) {
+                document.getElementById('modal-aviso').innerText = 'Selecione um tamanho para continuar';
+                return;
+            }
+            
+            document.getElementById('modal-aviso').innerText = '';
+
+            const nomeProduto = document.getElementById('modal-titulo').innerText;
+            const precoStr = document.getElementById('modal-preco').innerText.replace('R$ ', '').replace(',', '.');
+            const precoNum = parseFloat(precoStr);
+            const imagemSrc = document.getElementById('modal-img').src;
+            const corEscolhida = corSelecionadaModal;
+            const tamanhoEscolhido = tamanhoSelecionado;
+            const qtd = quantidadeAtual;
+
+            const itemExistente = carrinhoItens.find(item => item.nome === nomeProduto && item.cor === corEscolhida && item.tamanho === tamanhoEscolhido);
+
+            if (itemExistente) {
+                itemExistente.qtd += qtd;
+            } else {
+                carrinhoItens.push({
+                    id: Date.now(),
+                    nome: nomeProduto,
+                    preco: precoNum,
+                    imagem: imagemSrc,
+                    cor: corEscolhida,
+                    tamanho: tamanhoEscolhido,
+                    qtd: qtd
+                });
+            }
+
+            atualizarContadorTopo();
+            salvarCarrinho();
+
+            document.getElementById('modal-etapa-selecao').style.display = 'none';
+            document.getElementById('modal-etapa-sucesso').style.display = 'block';
+        }
+
+        function atualizarContadorTopo() {
+            let totalItens = carrinhoItens.reduce((soma, item) => soma + item.qtd, 0);
+            document.getElementById('contador-carrinho').innerText = totalItens;
+        }
+
+        function atualizarCarrinhoUI() {
+            const listaContainer = document.getElementById('carrinho-lista-produtos');
+            const qtdItensLabel = document.getElementById('carrinho-qtd-itens');
+            const subtotalLabel = document.getElementById('carrinho-subtotal-valor');
+
+            listaContainer.innerHTML = '';
+
+            let totalItens = carrinhoItens.reduce((soma, item) => soma + item.qtd, 0);
+            let subtotalGeral = carrinhoItens.reduce((soma, item) => soma + (item.preco * item.qtd), 0);
+
+            qtdItensLabel.innerText = totalItens + (totalItens === 1 ? ' item' : ' itens');
+            subtotalLabel.innerText = 'R$ ' + subtotalGeral.toFixed(2).replace('.', ',');
+
+            if (carrinhoItens.length === 0) {
+                listaContainer.innerHTML = '<p class="carrinho-vazio-msg">Seu carrinho está vazio.</p>';
+                return;
+            }
+
+            carrinhoItens.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'item-carrinho-card';
+                card.innerHTML = `
+                    <img src="${item.imagem}" alt="${item.nome}" class="foto-carrinho-fora">
+                    <div class="item-detalhes-box">
+                        <button class="btn-remover-item" onclick="removerItemCarrinho(${item.id})">
+                            <img src="/static/imagens/icons/lixeira.png" alt="Remover" class="icone-lixeira">
+                        </button>
+                        <h5>${item.nome}</h5>
+                        <p>Tam: ${item.tamanho} | Cor: ${item.cor}</p>
+                        <div class="item-preco-qtd">
+                            <span class="item-preco-card">R$ ${item.preco.toFixed(2).replace('.', ',')}</span>
+                            <div class="mini-qtd-box">
+                                <button type="button" onclick="alterarQtdItem(${item.id}, -1)">-</button>
+                                <span>${item.qtd}</span>
+                                <button type="button" onclick="alterarQtdItem(${item.id}, 1)">+</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                listaContainer.appendChild(card);
+            });
+        }
+
+        function alterarQtdItem(id, valor) {
+            const item = carrinhoItens.find(i => i.id === id);
+            if (item) {
+                item.qtd += valor;
+                if (item.qtd <= 0) {
+                    removerItemCarrinho(id);
+                } else {
+                    atualizarCarrinhoUI();
+                    atualizarContadorTopo();
+                    salvarCarrinho();
+                }
+            }
+        }
+
+        function removerItemCarrinho(id) {
+            carrinhoItens = carrinhoItens.filter(i => i.id !== id);
+            atualizarCarrinhoUI();
+            atualizarContadorTopo();
+            salvarCarrinho();
+        }
+
+        function irParaCheckoutWhatsApp() {
+            fecharModal();
+            abrirCarrinhoLateral();
+        }
+
+        function alternarBusca() {
+            const barra = document.getElementById('barra-pesquisa-container');
+            const input = document.getElementById('input-busca-produto');
+            
+            if (barra.style.display === 'none') {
+                barra.style.display = 'block';
+                input.focus();
+            } else {
+                barra.style.display = 'none';
+                input.value = '';
+                filtrarProdutos('');
+            }
+        }
+
+        function filtrarProdutos(termo) {
+            let termoLimpo = termo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            const cards = document.querySelectorAll('.card-produto');
+
+            cards.forEach(card => {
+                const titulo = card.querySelector('.titulo-produto').innerText.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                if (titulo.includes(termoLimpo)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        let carrinhoItens = JSON.parse(localStorage.getItem('kurtgriffes-carrinho') || '[]');
+
+        function salvarCarrinho() {
+            localStorage.setItem('kurtgriffes-carrinho', JSON.stringify(carrinhoItens));
+        }
+
+        function abrirCarrinhoLateral() {
+            document.getElementById('gaveta-carrinho').classList.add('ativo');
+            document.getElementById('overlay-carrinho').style.display = 'block';
+            atualizarCarrinhoUI();
+        }
+
+        function fecharCarrinhoLateral() {
+            document.getElementById('gaveta-carrinho').classList.remove('ativo');
+            document.getElementById('overlay-carrinho').style.display = 'none';
+        }
+
+        function finalizarCompraWhatsApp() {
+            if (carrinhoItens.length === 0) {
+                alert('Seu carrinho está vazio!');
+                return;
+            }
+
+            let numeroWhatsApp = "5511919877629";
+            const formaPagamento = document.getElementById('forma-pagamento').value;
+            const nomesPagamento = { pix: 'Pix', cartao: 'Cartão de crédito', boleto: 'Boleto bancário' };
+            let mensagem = "🔥 *PEDIDO - KURT GRIFFES* 🔥\n\n";
+
+            let subtotalGeral = 0;
+            carrinhoItens.forEach((item, index) => {
+                let totalItem = item.preco * item.qtd;
+                subtotalGeral += totalItem;
+                mensagem += `${index + 1}. *${item.nome}*\n`;
+                mensagem += `   - Tamanho: ${item.tamanho} | Cor: ${item.cor}\n`;
+                mensagem += `   - Qtd: ${item.qtd}x | R$ ${totalItem.toFixed(2).replace('.', ',')}\n\n`;
+            });
+
+            mensagem += `💰 *Subtotal:* R$ ${subtotalGeral.toFixed(2).replace('.', ',')}\n`;
+            mensagem += `📦 *Frete:* A calcular no atendimento\n`;
+            mensagem += `💳 *Pagamento:* ${nomesPagamento[formaPagamento]}\n`;
+            if (formaPagamento === 'pix') mensagem += `🔑 *Chave Pix:* {{ config['PIX_KEY'] }}\n`;
+            mensagem += `\n`;
+            mensagem += `Olá! Gostaria de fechar este pedido.`;
+
+            let url = `https://api.whatsapp.com/send?phone=${numeroWhatsApp}&text=${encodeURIComponent(mensagem)}`;
+            window.open(url, '_blank');
+        }
+
+        document.getElementById('forma-pagamento').addEventListener('change', function () {
+            document.getElementById('pix-chave').style.display = this.value === 'pix' ? 'block' : 'none';
+        });
+        atualizarContadorTopo();
+    </script>
+</body>
+</html>

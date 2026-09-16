@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Novo produto | Kurt Griffes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="admin-body">
+    <main class="admin-shell admin-form-shell">
+        <header class="admin-topo"><div><p class="admin-kicker">CATÁLOGO</p><h1>Novo produto</h1></div><a href="{{ url_for('admin_produtos') }}">Voltar</a></header>
+        {% with mensagens = get_flashed_messages(with_categories=true) %}{% for categoria, mensagem in mensagens %}<div class="flash {{ categoria }}">{{ mensagem }}</div>{% endfor %}{% endwith %}
+        <form method="post" enctype="multipart/form-data" class="admin-form produto-form">
+            <label for="nome">Nome do produto</label><input id="nome" name="nome" required>
+            <div class="admin-grid-2"><div><label for="categoria">Categoria</label><select id="categoria" name="categoria">{% for chave, dados in categorias.items() %}<option value="{{ chave }}">{{ dados[0] }}</option>{% endfor %}</select></div><div><label for="preco">Preço</label><input id="preco" name="preco" inputmode="decimal" placeholder="149,90" required></div></div>
+            <div class="admin-grid-2"><div><label for="cores">Cores <small>separadas por vírgula</small></label><input id="cores" name="cores" placeholder="Preto, Branco"></div><div><label for="estoque">Estoque</label><input id="estoque" name="estoque" type="number" min="0" value="0" required></div></div>
+            <label for="fotos">Fotos <small>JPG, PNG ou WebP. Serão comprimidas automaticamente.</small></label><input id="fotos" name="fotos" type="file" accept="image/jpeg,image/png,image/webp" multiple>
+            <button type="submit" class="btn-comprar">Publicar produto</button>
+        </form>
+    </main>
+</body>
+</html>

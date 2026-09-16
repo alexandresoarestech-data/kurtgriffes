@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Produtos | Kurt Griffes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="admin-body">
+    <main class="admin-shell">
+        <header class="admin-topo"><div><p class="admin-kicker">PAINEL</p><h1>Produtos</h1></div><nav><a href="{{ url_for('home') }}">Ver loja</a><a href="{{ url_for('admin_sair') }}">Sair</a></nav></header>
+        {% with mensagens = get_flashed_messages(with_categories=true) %}
+            {% for categoria, mensagem in mensagens %}<div class="flash {{ categoria }}">{{ mensagem }}</div>{% endfor %}
+        {% endwith %}
+        <div class="admin-acoes"><p>{{ produtos|length }} produto(s) cadastrado(s)</p><a href="{{ url_for('admin_novo_produto') }}" class="btn-comprar admin-novo">+ Novo produto</a></div>
+        <section class="admin-tabela-wrap">
+            <table class="admin-tabela"><thead><tr><th>Produto</th><th>Categoria</th><th>Preço</th><th>Estoque</th><th>Ação</th></tr></thead><tbody>
+            {% for produto in produtos %}<tr><td><strong>{{ produto.nome }}</strong></td><td>{{ categorias.get(produto.categoria, (produto.categoria, ''))[0] }}</td><td>R$ {{ "%.2f"|format(produto.preco) }}</td><td class="{{ 'estoque-baixo' if produto.estoque < 3 else '' }}">{{ produto.estoque }}{% if produto.estoque < 3 %} · baixo{% endif %}</td><td><form method="post" action="{{ url_for('admin_excluir_produto', produto_id=produto.id) }}" onsubmit="return confirm('Excluir este produto?')"><button class="btn-excluir" type="submit">Excluir</button></form></td></tr>{% else %}<tr><td colspan="5">Nenhum produto cadastrado.</td></tr>{% endfor %}
+            </tbody></table>
+        </section>
+    </main>
+</body>
+</html>

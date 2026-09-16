@@ -1,0 +1,17 @@
+Configuração do Ambiente Python
+Abra o terminal integrado do VS Code (Ctrl + ') e digite os comandos abaixo 
+para criar um ambiente virtual (isso evita misturar bibliotecas do projeto 
+com o sistema do seu PC) e instalar o Flask:
+
+1- python -m venv venv
+
+2-- Para ativar no Windows:
+venv\Scripts\activate
+
+2-- Para ativar no Mac/Linux:
+source venv/bin/activate
+
+3- pip install Flask
+
+(se necessário)
+4- python.exe -m pip install --upgrade pip
