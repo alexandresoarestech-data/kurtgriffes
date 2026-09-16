@@ -187,7 +187,12 @@ def admin_produtos():
         return bloqueio
     with conectar_banco() as banco:
         produtos = banco.execute("SELECT * FROM produtos ORDER BY id DESC").fetchall()
-    return render_template("admin_produtos.html", produtos=produtos, categorias=CATEGORIAS)
+    resumo = {
+        "total": len(produtos),
+        "estoque_baixo": sum(produto["estoque"] < 3 for produto in produtos),
+        "categorias": len({produto["categoria"] for produto in produtos}),
+    }
+    return render_template("admin_produtos.html", produtos=produtos, categorias=CATEGORIAS, resumo=resumo)
 
 
 @app.route("/admin/produtos/novo", methods=["GET", "POST"])
@@ -235,7 +240,64 @@ def admin_novo_produto():
             banco.commit()
         flash("Produto criado com sucesso.", "sucesso")
         return redirect(url_for("admin_produtos"))
-    return render_template("admin_novo.html", categorias=CATEGORIAS)
+    return render_template("admin_novo.html", categorias=CATEGORIAS, produto=None, modo_edicao=False)
+
+
+@app.route("/admin/produtos/<int:produto_id>/editar", methods=["GET", "POST"])
+def admin_editar_produto(produto_id):
+    bloqueio = admin_obrigatorio()
+    if bloqueio:
+        return bloqueio
+    with conectar_banco() as banco:
+        produto = banco.execute("SELECT * FROM produtos WHERE id = ?", (produto_id,)).fetchone()
+    if produto is None:
+        flash("Produto não encontrado.", "erro")
+        return redirect(url_for("admin_produtos"))
+
+    if request.method == "POST":
+        nome = request.form.get("nome", "").strip()
+        categoria = normalizar_categoria(request.form.get("categoria"))
+        preco = converter_preco(request.form.get("preco"))
+        cores = request.form.get("cores", "").strip()
+        try:
+            estoque = max(0, int(request.form.get("estoque", 0) or 0))
+        except (TypeError, ValueError):
+            flash("O estoque deve ser um número inteiro maior ou igual a zero.", "erro")
+            return render_template("admin_novo.html", categorias=CATEGORIAS, produto=produto, modo_edicao=True)
+        if not nome:
+            flash("Informe o nome do produto.", "erro")
+            return render_template("admin_novo.html", categorias=CATEGORIAS, produto=produto, modo_edicao=True)
+
+        imagens = [imagem for imagem in (produto["imagens"] or "").split("|") if imagem]
+        pasta = UPLOAD_DIR / f"admin-produto-{produto_id}"
+        pasta.mkdir(parents=True, exist_ok=True)
+        for arquivo in request.files.getlist("fotos"):
+            if not arquivo or not arquivo.filename:
+                continue
+            nome_seguro = secure_filename(Path(arquivo.filename).stem) or "foto"
+            destino = pasta / f"{nome_seguro}-{os.urandom(2).hex()}.webp"
+            try:
+                if Image:
+                    imagem = Image.open(arquivo.stream).convert("RGB")
+                    imagem.thumbnail((1600, 1600))
+                    imagem.save(destino, "WEBP", quality=84, method=6)
+                else:
+                    destino = pasta / f"{nome_seguro}-{os.urandom(2).hex()}{Path(arquivo.filename).suffix.lower()}"
+                    arquivo.save(destino)
+                imagens.append(destino.relative_to(BASE_DIR / "static").as_posix())
+            except Exception:
+                flash("Uma das imagens não pôde ser processada.", "erro")
+
+        with conectar_banco() as banco:
+            banco.execute(
+                "UPDATE produtos SET nome = ?, categoria = ?, preco = ?, cores = ?, estoque = ?, imagens = ? WHERE id = ?",
+                (nome, categoria, preco, cores, estoque, "|".join(imagens), produto_id),
+            )
+            banco.commit()
+        flash("Produto atualizado com sucesso.", "sucesso")
+        return redirect(url_for("admin_produtos"))
+
+    return render_template("admin_novo.html", categorias=CATEGORIAS, produto=produto, modo_edicao=True)
 
 
 @app.post("/admin/produtos/<int:produto_id>/excluir")
