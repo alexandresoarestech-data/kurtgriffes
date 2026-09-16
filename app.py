@@ -15,7 +15,8 @@ except ImportError:
 
 
 BASE_DIR = Path(__file__).resolve().parent
-DATABASE = BASE_DIR / "loja.db"
+DATABASE = BASE_DIR / "loja.sqlite3"
+LEGACY_DATABASE = BASE_DIR / "loja.db"
 UPLOAD_DIR = BASE_DIR / "static" / "imagens" / "produtos"
 URL_DA_PLANILHA = os.environ.get(
     "URL_DA_PLANILHA",
@@ -36,7 +37,8 @@ app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024
 
 
 def conectar_banco():
-    conexao = sqlite3.connect(DATABASE)
+    conexao = sqlite3.connect(DATABASE, timeout=30)
+    conexao.execute("PRAGMA busy_timeout = 30000")
     conexao.row_factory = sqlite3.Row
     return conexao
 
@@ -58,7 +60,27 @@ def inicializar_banco():
         )
         quantidade = banco.execute("SELECT COUNT(*) FROM produtos").fetchone()[0]
         if quantidade == 0:
-            migrar_planilha(banco)
+            migrar_banco_antigo(banco)
+            quantidade = banco.execute("SELECT COUNT(*) FROM produtos").fetchone()[0]
+            if quantidade == 0:
+                migrar_planilha(banco)
+
+
+def migrar_banco_antigo(banco):
+    if not LEGACY_DATABASE.exists():
+        return
+    try:
+        antigo = sqlite3.connect(LEGACY_DATABASE, timeout=5)
+        antigo.row_factory = sqlite3.Row
+        produtos = antigo.execute("SELECT nome, categoria, preco, cores, estoque, imagens, ativo FROM produtos").fetchall()
+        antigo.close()
+        banco.executemany(
+            "INSERT INTO produtos (nome, categoria, preco, cores, estoque, imagens, ativo) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            [tuple(produto) for produto in produtos],
+        )
+        banco.commit()
+    except sqlite3.Error as erro:
+        app.logger.warning("Não foi possível migrar o banco antigo: %s", erro)
 
 
 def converter_preco(valor):
@@ -111,7 +133,7 @@ def produto_para_template(produto):
     item = dict(produto)
     imagens = [imagem for imagem in (item.get("imagens") or "").split("|") if imagem]
     if not imagens:
-        imagens = ["imagens/placeholder.jpg"]
+        imagens = ["imagens/placeholder.svg"]
     item["todas_imagens"] = imagens
     item["imagem_capa"] = imagens[0]
     item["lista_cores"] = [cor.strip() for cor in (item.get("cores") or "").split(",") if cor.strip()]
