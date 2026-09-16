@@ -136,7 +136,7 @@
                         <p class="preco-produto">R$ {{ "%.2f"|format(produto.preco) }}</p>
                         <p class="parcelas-produto">{{ produto.parcelas }}</p>
                         
-                        <button class="btn-comprar" 
+                        <button class="btn-comprar {{ 'produto-indisponivel' if produto.estoque <= 0 else '' }}"
                             data-nome="{{ produto.nome }}"
                             data-preco="{{ produto.preco }}"
                             data-parcelas="{{ produto.parcelas }}"
@@ -145,8 +145,10 @@
                             data-tam-id="tam-nov-{{ produto.id }}"
                             data-cores='{{ produto.lista_cores | tojson }}'
                             data-is-calcado="{{ 'true' if e_calcado else 'false' }}"
+                            data-estoque="{{ produto.estoque }}"
+                            {% if produto.estoque <= 0 %}disabled{% endif %}
                             onclick="abrirModalPorElemento(this)">
-                            Adicionar ao carrinho
+                            {{ 'Produto indisponível' if produto.estoque <= 0 else 'Adicionar ao carrinho' }}
                         </button>
                     </div>
                 </article>
@@ -225,7 +227,7 @@
                         <p class="preco-produto">R$ {{ "%.2f"|format(produto.preco) }}</p>
                         <p class="parcelas-produto">{{ produto.parcelas }}</p>
                         
-                        <button class="btn-comprar" 
+                        <button class="btn-comprar {{ 'produto-indisponivel' if produto.estoque <= 0 else '' }}"
                             data-nome="{{ produto.nome }}"
                             data-preco="{{ produto.preco }}"
                             data-parcelas="{{ produto.parcelas }}"
@@ -234,8 +236,10 @@
                             data-tam-id="tam-cat-{{ chave }}-{{ produto.id }}"
                             data-cores='{{ produto.lista_cores | tojson }}'
                             data-is-calcado="{{ 'true' if e_calcado else 'false' }}"
+                            data-estoque="{{ produto.estoque }}"
+                            {% if produto.estoque <= 0 %}disabled{% endif %}
                             onclick="abrirModalPorElemento(this)">
-                            Adicionar ao carrinho
+                            {{ 'Produto indisponível' if produto.estoque <= 0 else 'Adicionar ao carrinho' }}
                         </button>
                     </div>
                 </article>
@@ -500,6 +504,9 @@
         let quantidadeAtual = 1;
 
         function abrirModalPorElemento(botao) {
+            if (Number(botao.getAttribute('data-estoque') || 0) <= 0) {
+                return;
+            }
             const nome = botao.getAttribute('data-nome');
             const preco = botao.getAttribute('data-preco');
             const parcelas = botao.getAttribute('data-parcelas');

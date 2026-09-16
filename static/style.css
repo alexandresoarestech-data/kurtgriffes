@@ -216,6 +216,14 @@ a {
     background-color: var(--cor-gold-hover);
 }
 
+.btn-comprar.produto-indisponivel,
+.btn-comprar.produto-indisponivel:hover {
+    background-color: #29292d;
+    color: #92929a;
+    cursor: not-allowed;
+    filter: none;
+}
+
 /* ==========================================================================
    5. SEÇÃO CTA (CALL TO ACTION)
    ========================================================================== */
