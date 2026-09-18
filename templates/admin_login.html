@@ -9,7 +9,7 @@
 <body class="admin-body">
     <main class="admin-login">
         <a href="{{ url_for('home') }}" class="admin-voltar">Voltar para a loja</a>
-        <h1>Kurt Griffes</h1>
+        <h1><span class="brand-mark">♛</span> Kurt Griffes</h1>
         <p>Acesso administrativo</p>
         {% with mensagens = get_flashed_messages(with_categories=true) %}
             {% for categoria, mensagem in mensagens %}<div class="flash {{ categoria }}">{{ mensagem }}</div>{% endfor %}

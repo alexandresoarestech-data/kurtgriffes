@@ -64,6 +64,18 @@ a {
     height: 72px;
     width: auto;
     margin-bottom: 5px;
+    filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.8));
+}
+
+.brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--cor-gold);
+    text-shadow: 0 0 14px rgba(212, 175, 55, 0.9);
+    font-size: 0.72em;
+    margin-right: 8px;
+    transform: translateY(-2px);
 }
 
 .icone-header {
@@ -1178,15 +1190,20 @@ a {
 .pagamento-label { display: block; color: #cbd5e1; font-size: 13px; margin-bottom: 7px; }
 .select-pagamento { width: 100%; padding: 12px; margin-bottom: 8px; border-radius: 7px; background: #141416; color: white; border: 1px solid #3f3f46; }
 .pix-chave { color: var(--cor-gold); font-size: 12px; overflow-wrap: anywhere; margin-bottom: 14px; }
-.admin-body { min-height: 100vh; background: #09090b; color: white; }
-.admin-login { width: min(430px, calc(100% - 40px)); margin: 12vh auto; padding: 38px; background: #111113; border: 1px solid #29292d; border-radius: 12px; }
-.admin-login h1 { font-size: 34px; margin-top: 18px; }
-.admin-login > p { color: #aaa; margin-bottom: 30px; }
+.admin-body {
+    min-height: 100vh;
+    background: #050505;
+    color: white;
+    background-image: radial-gradient(circle at top, rgba(212, 175, 55, 0.08), transparent 30%);
+}
+.admin-login { width: min(430px, calc(100% - 40px)); margin: 12vh auto; padding: 38px; background: #111113; border: 1px solid rgba(212, 175, 55, 0.35); border-radius: 12px; box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45); }
+.admin-login h1 { font-size: 34px; margin-top: 18px; display: flex; align-items: center; gap: 10px; }
+.admin-login p { color: #aaa; margin-bottom: 30px; }
 .admin-voltar, .admin-topo a { color: var(--cor-gold); }
 .admin-shell { width: min(1100px, calc(100% - 40px)); margin: 40px auto; }
 .admin-topo { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px; }
 .admin-topo-titulo { display: flex; flex-direction: column; gap: 0; }
-.admin-topo h1 { font-size: 42px; margin-top: 2px; }
+.admin-topo h1 { display: flex; align-items: center; gap: 10px; font-size: 42px; margin-top: 2px; }
 .admin-topo-nav { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .admin-topo-nav a { display: inline-flex; align-items: center; justify-content: center; min-height: 34px; padding: 7px 11px; border: 1px solid rgba(212, 175, 55, .32); border-radius: 999px; background: rgba(212, 175, 55, .06); font-size: 13px; font-weight: 700; line-height: 1; transition: background-color .2s ease, border-color .2s ease, transform .2s ease; }
 .admin-topo-nav a:hover { background: rgba(212, 175, 55, .12); border-color: rgba(212, 175, 55, .5); transform: translateY(-1px); }

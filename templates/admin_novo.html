@@ -11,7 +11,7 @@
         <header class="admin-topo admin-topo-form">
             <div class="admin-topo-titulo">
                 <p class="admin-kicker">CATÁLOGO</p>
-                <h1>{{ 'Editar produto' if modo_edicao else 'Novo produto' }}</h1>
+                <h1><span class="brand-mark">♛</span> {{ 'Editar produto' if modo_edicao else 'Novo produto' }}</h1>
             </div>
             <a href="{{ url_for('admin_produtos') }}" class="admin-voltar-link">Voltar</a>
         </header>
