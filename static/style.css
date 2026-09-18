@@ -34,12 +34,17 @@ a {
    ========================================================================== */
 .cabecalho {
     display: flex;
-    justify-content: center;
     align-items: center;
-    gap: 26px;
+    justify-content: space-between;
+    gap: 20px;
     padding: 16px 5% 14px;
     background-color: var(--fundo-principal);
     border-bottom: 1px solid var(--cor-borda);
+}
+
+.cabecalho > *:first-child,
+.cabecalho > *:nth-child(2) {
+    flex: 0 0 auto;
 }
 
 .logo {
@@ -51,7 +56,8 @@ a {
     font-size: 46px;
     letter-spacing: 2px;
     color: var(--cor-texto-principal);
-    margin: 0 10px;
+    margin: 0 auto;
+    flex: 1 1 auto;
 }
 
 .logo-coroa {
@@ -63,6 +69,9 @@ a {
 .icone-header {
     font-size: 20px;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .icone-img {
@@ -74,9 +83,11 @@ a {
 .carrinho {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 10px;
     font-size: 24px;
     font-weight: 700;
+    margin-left: auto;
 }
 
 /* ==========================================================================
