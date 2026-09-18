@@ -58,6 +58,20 @@ def inicializar_banco():
                 criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )"""
         )
+
+        colunas = {linha[1] for linha in banco.execute("PRAGMA table_info(produtos)").fetchall()}
+        if "data_criacao" not in colunas:
+            banco.execute("ALTER TABLE produtos ADD COLUMN data_criacao TEXT")
+        if "hora_criacao" not in colunas:
+            banco.execute("ALTER TABLE produtos ADD COLUMN hora_criacao TEXT")
+
+        banco.execute(
+            """UPDATE produtos
+               SET data_criacao = COALESCE(data_criacao, date(criado_em)),
+                   hora_criacao = COALESCE(hora_criacao, time(criado_em))
+               WHERE data_criacao IS NULL OR hora_criacao IS NULL"""
+        )
+
         quantidade = banco.execute("SELECT COUNT(*) FROM produtos").fetchone()[0]
         if quantidade == 0:
             migrar_banco_antigo(banco)
@@ -75,7 +89,7 @@ def migrar_banco_antigo(banco):
         produtos = antigo.execute("SELECT nome, categoria, preco, cores, estoque, imagens, ativo FROM produtos").fetchall()
         antigo.close()
         banco.executemany(
-            "INSERT INTO produtos (nome, categoria, preco, cores, estoque, imagens, ativo) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO produtos (nome, categoria, preco, cores, estoque, imagens, ativo, data_criacao, hora_criacao) VALUES (?, ?, ?, ?, ?, ?, ?, date('now'), time('now'))",
             [tuple(produto) for produto in produtos],
         )
         banco.commit()
@@ -115,7 +129,7 @@ def migrar_planilha(banco):
             imagens = listar_imagens_pasta(pasta)
             categoria = normalizar_categoria(linha.get("categoria", ""))
             banco.execute(
-                "INSERT INTO produtos (nome, categoria, preco, cores, estoque, imagens) VALUES (?, ?, ?, ?, ?, ?)",
+                "INSERT INTO produtos (nome, categoria, preco, cores, estoque, imagens, data_criacao, hora_criacao) VALUES (?, ?, ?, ?, ?, ?, date('now'), time('now'))",
                 (linha.get("nome", "Produto"), categoria, converter_preco(linha.get("preco")), linha.get("cor", ""), 10, "|".join(imagens)),
             )
         banco.commit()
@@ -236,7 +250,10 @@ def admin_novo_produto():
                 flash("Uma das imagens não pôde ser processada.", "erro")
 
         with conectar_banco() as banco:
-            banco.execute("INSERT INTO produtos (nome, categoria, preco, cores, estoque, imagens) VALUES (?, ?, ?, ?, ?, ?)", (nome, categoria, preco, cores, estoque, "|".join(imagens)))
+            banco.execute(
+                "INSERT INTO produtos (nome, categoria, preco, cores, estoque, imagens, data_criacao, hora_criacao) VALUES (?, ?, ?, ?, ?, ?, date('now'), time('now'))",
+                (nome, categoria, preco, cores, estoque, "|".join(imagens)),
+            )
             banco.commit()
         flash("Produto criado com sucesso.", "sucesso")
         return redirect(url_for("admin_produtos"))
@@ -290,7 +307,7 @@ def admin_editar_produto(produto_id):
 
         with conectar_banco() as banco:
             banco.execute(
-                "UPDATE produtos SET nome = ?, categoria = ?, preco = ?, cores = ?, estoque = ?, imagens = ? WHERE id = ?",
+                "UPDATE produtos SET nome = ?, categoria = ?, preco = ?, cores = ?, estoque = ?, imagens = ?, data_criacao = COALESCE(data_criacao, date('now')), hora_criacao = COALESCE(hora_criacao, time('now')) WHERE id = ?",
                 (nome, categoria, preco, cores, estoque, "|".join(imagens), produto_id),
             )
             banco.commit()
