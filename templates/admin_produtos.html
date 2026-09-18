@@ -8,7 +8,16 @@
 </head>
 <body class="admin-body">
     <main class="admin-shell">
-        <header class="admin-topo"><div><p class="admin-kicker">PAINEL</p><h1>Produtos</h1></div><nav><a href="{{ url_for('home') }}">Ver loja</a><a href="{{ url_for('admin_sair') }}">Sair</a></nav></header>
+        <header class="admin-topo">
+            <div class="admin-topo-titulo">
+                <p class="admin-kicker">PAINEL</p>
+                <h1>Produtos</h1>
+            </div>
+            <nav class="admin-topo-nav">
+                <a href="{{ url_for('home') }}">Ver loja</a>
+                <a href="{{ url_for('admin_sair') }}">Sair</a>
+            </nav>
+        </header>
         {% with mensagens = get_flashed_messages(with_categories=true) %}
             {% for categoria, mensagem in mensagens %}<div class="flash {{ categoria }}">{{ mensagem }}</div>{% endfor %}
         {% endwith %}
