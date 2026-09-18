@@ -16,9 +16,22 @@
         {% endwith %}
         <form method="post" class="admin-form">
             <label for="senha">Senha</label>
-            <input id="senha" name="senha" type="password" required autofocus>
+            <div class="campo-senha">
+                <input id="senha" name="senha" type="password" required autofocus autocomplete="current-password">
+                <button type="button" class="botao-ver-senha" onclick="alternarSenha()" aria-label="Mostrar senha">Mostrar</button>
+            </div>
             <button type="submit" class="btn-comprar">Entrar</button>
         </form>
     </main>
+    <script>
+        function alternarSenha() {
+            const campo = document.getElementById('senha');
+            const botao = document.querySelector('.botao-ver-senha');
+            const senhaVisivel = campo.type === 'text';
+            campo.type = senhaVisivel ? 'password' : 'text';
+            botao.textContent = senhaVisivel ? 'Mostrar' : 'Ocultar';
+            botao.setAttribute('aria-label', senhaVisivel ? 'Mostrar senha' : 'Ocultar senha');
+        }
+    </script>
 </body>
 </html>

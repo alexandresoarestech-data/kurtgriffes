@@ -1284,6 +1284,10 @@ a {
 .admin-login { width: min(430px, calc(100% - 40px)); margin: 12vh auto; padding: 38px; background: #111113; border: 1px solid rgba(212, 175, 55, 0.35); border-radius: 12px; box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45); }
 .admin-login h1 { font-size: 34px; margin-top: 18px; display: flex; align-items: center; gap: 10px; }
 .admin-login p { color: #aaa; margin-bottom: 30px; }
+.campo-senha { position: relative; display: flex; align-items: center; }
+.campo-senha input { padding-right: 82px; }
+.botao-ver-senha { position: absolute; right: 10px; border: 0; background: transparent; color: var(--cor-gold); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.botao-ver-senha:hover { color: #f0d878; }
 .admin-voltar, .admin-topo a { color: var(--cor-gold); }
 .admin-shell { width: min(1100px, calc(100% - 40px)); margin: 40px auto; }
 .admin-topo { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px; }
