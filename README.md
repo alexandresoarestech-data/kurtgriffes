@@ -114,12 +114,20 @@ Copy-Item loja.sqlite3 "backup-loja-$(Get-Date -Format yyyyMMdd-HHmmss).sqlite3"
 
 As fotos ficam em `static/imagens/produtos/`. Cada produto pode ter sua propria pasta. O painel converte novas fotos para WebP quando o Pillow esta instalado e grava no banco somente o caminho relativo. Os icones ficam em `static/imagens/icons/`.
 
+## Componentes atuais
+
+- Home com banner da colecao, faixa institucional e manifesto da marca.
+- Carrinho lateral com Pix e cartao de credito como unicas formas de pagamento.
+- Mensagem curta para WhatsApp sem chave Pix e sem emojis excessivos.
+- Login administrativo com botao para mostrar ou ocultar a senha.
+- Painel com busca, metricas, cadastro, edicao e exclusao de produtos.
+
 ## Fluxo principal
 
 1. `app.py` inicializa o banco e migra data e hora quando necessario.
 2. `/` consulta produtos ativos.
 3. O navegador monta o carrinho no `localStorage`.
-4. O cliente escolhe Pix, cartao ou boleto.
+4. O cliente escolhe Pix ou cartao de credito; boleto nao faz parte do checkout.
 5. O JavaScript cria uma mensagem curta com itens e apenas a forma de pagamento.
 6. O pedido abre no WhatsApp.
 7. O administrador gerencia o catalogo em `/admin`.
