@@ -1,5 +1,7 @@
 import csv
+import hmac
 import os
+import secrets
 import sqlite3
 from io import StringIO
 from pathlib import Path
@@ -30,10 +32,13 @@ CATEGORIAS = {
 }
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "chave-de-desenvolvimento-altere-em-producao")
-app.config["ADMIN_PASSWORD"] = os.environ.get("ADMIN_PASSWORD", "admin123")
-app.config["PIX_KEY"] = os.environ.get("PIX_KEY", "chave-pix-nao-configurada")
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY") or secrets.token_urlsafe(32)
+app.config["ADMIN_PASSWORD"] = os.environ.get("ADMIN_PASSWORD", "")
+app.config["PIX_KEY"] = os.environ.get("PIX_KEY", "")
 app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = os.environ.get("COOKIE_SECURE", "0") == "1"
 
 
 def conectar_banco():
@@ -181,10 +186,12 @@ def home():
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
     if request.method == "POST":
-        if request.form.get("senha") == app.config["ADMIN_PASSWORD"]:
+        senha_configurada = app.config["ADMIN_PASSWORD"]
+        senha_informada = request.form.get("senha", "")
+        if senha_configurada and hmac.compare_digest(senha_informada, senha_configurada):
             session["admin_logado"] = True
             return redirect(url_for("admin_produtos"))
-        flash("Senha inválida.", "erro")
+        flash("Senha inválida ou acesso administrativo não configurado.", "erro")
     return render_template("admin_login.html")
 
 
@@ -338,4 +345,8 @@ def arquivo_muito_grande(_erro):
 inicializar_banco()
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(
+        host=os.environ.get("HOST", "127.0.0.1"),
+        port=int(os.environ.get("PORT", "5000")),
+        debug=os.environ.get("FLASK_DEBUG", "0") == "1",
+    )

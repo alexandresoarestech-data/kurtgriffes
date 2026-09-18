@@ -1217,7 +1217,6 @@ a {
     outline: 2px solid rgba(212, 175, 55, 0.35);
     border-color: rgba(212, 175, 55, 0.65);
 }
-.pix-chave { color: var(--cor-gold); font-size: 12px; overflow-wrap: anywhere; margin-bottom: 14px; }
 .admin-body {
     min-height: 100vh;
     background: #050505;
