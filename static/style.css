@@ -34,9 +34,10 @@ a {
    ========================================================================== */
 .cabecalho {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    padding: 20px 5%;
+    gap: 26px;
+    padding: 16px 5% 14px;
     background-color: var(--fundo-principal);
     border-bottom: 1px solid var(--cor-borda);
 }
@@ -44,11 +45,13 @@ a {
 .logo {
     display: flex;
     align-items: center;
-    gap: 12px;
+    justify-content: center;
+    gap: 10px;
     font-family: 'Sedgwick Ave Display', cursive;
     font-size: 46px;
     letter-spacing: 2px;
     color: var(--cor-texto-principal);
+    margin: 0 10px;
 }
 
 .logo-coroa {
@@ -1141,7 +1144,7 @@ a {
     }
 }
 
-.botao-menu { background: none; border: 0; color: white; font-size: 30px; cursor: pointer; width: 65px; }
+.botao-menu { background: none; border: 0; color: white; font-size: 30px; cursor: pointer; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; }
 .menu-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.78); z-index: 3000; }
 .menu-overlay.ativo { display: block; }
 .menu-lateral { position: fixed; top: 0; left: -340px; width: min(340px, 88vw); height: 100vh; padding: 80px 35px 30px; background: #111113; border-right: 1px solid var(--cor-borda); z-index: 3001; transition: left .3s ease; }
@@ -1170,11 +1173,11 @@ a {
 .admin-login > p { color: #aaa; margin-bottom: 30px; }
 .admin-voltar, .admin-topo a { color: var(--cor-gold); }
 .admin-shell { width: min(1100px, calc(100% - 40px)); margin: 40px auto; }
-.admin-topo { display: flex; justify-content: space-between; align-items: center; gap: 18px; margin-bottom: 24px; }
-.admin-topo-titulo { display: flex; flex-direction: column; gap: 2px; }
-.admin-topo h1 { font-size: 42px; margin-top: 5px; }
-.admin-topo-nav { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.admin-topo-nav a { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; padding: 8px 12px; border: 1px solid rgba(212, 175, 55, .32); border-radius: 999px; background: rgba(212, 175, 55, .06); font-size: 14px; font-weight: 700; line-height: 1; transition: background-color .2s ease, border-color .2s ease, transform .2s ease; }
+.admin-topo { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px; }
+.admin-topo-titulo { display: flex; flex-direction: column; gap: 0; }
+.admin-topo h1 { font-size: 42px; margin-top: 2px; }
+.admin-topo-nav { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.admin-topo-nav a { display: inline-flex; align-items: center; justify-content: center; min-height: 34px; padding: 7px 11px; border: 1px solid rgba(212, 175, 55, .32); border-radius: 999px; background: rgba(212, 175, 55, .06); font-size: 13px; font-weight: 700; line-height: 1; transition: background-color .2s ease, border-color .2s ease, transform .2s ease; }
 .admin-topo-nav a:hover { background: rgba(212, 175, 55, .12); border-color: rgba(212, 175, 55, .5); transform: translateY(-1px); }
 .admin-acoes { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; color: #aaa; }
 .admin-metricas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 30px 0 42px; }
