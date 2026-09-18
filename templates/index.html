@@ -411,7 +411,6 @@
             <select id="forma-pagamento" class="select-pagamento">
                 <option value="pix">Pix</option>
                 <option value="cartao">Cartão de crédito</option>
-                <option value="boleto">Boleto bancário</option>
             </select>
             
             <button type="button" class="btn-finalizar-compra" onclick="finalizarCompraWhatsApp()">
@@ -810,7 +809,7 @@
 
             let numeroWhatsApp = "5511919877629";
             const formaPagamento = document.getElementById('forma-pagamento').value;
-            const nomesPagamento = { pix: 'Pix', cartao: 'Cartão de crédito', boleto: 'Boleto bancário' };
+            const nomesPagamento = { pix: 'Pix', cartao: 'Cartão de crédito' };
             let mensagem = "Olá! Gostaria de fazer um pedido.\n\n";
             mensagem += "*PEDIDO KURT GRIFFES*\n\n";
 
