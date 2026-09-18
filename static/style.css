@@ -64,7 +64,7 @@ a {
     height: 72px;
     width: auto;
     margin-bottom: 5px;
-    filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.8));
+    filter: none;
 }
 
 .brand-mark {
@@ -72,7 +72,7 @@ a {
     align-items: center;
     justify-content: center;
     color: var(--cor-gold);
-    text-shadow: 0 0 14px rgba(212, 175, 55, 0.9);
+    text-shadow: none;
     font-size: 0.72em;
     margin-right: 8px;
     transform: translateY(-2px);
