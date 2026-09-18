@@ -22,6 +22,7 @@ body {
     color: var(--cor-texto-principal);
     font-family: 'Inter', sans-serif;
     line-height: 1.5;
+    overflow-x: hidden;
 }
 
 a {
@@ -1081,9 +1082,19 @@ a {
     .botao-menu, .icone-img { width: 42px; }
     .logo { font-size: 25px; gap: 5px; }
     .logo-coroa { height: 42px; }
+    .carrinho-gaveta { width: 100vw; max-width: 100vw; right: -100vw; }
+    .carrinho-gaveta.ativo { right: 0; }
     .banner-destaques { min-height: 230px; padding: 38px 7%; }
     .banner-slide h1 { font-size: 38px; line-height: 1.1; }
     .banner-slide span { font-size: 14px; }
+    .beneficios-marca { grid-template-columns: 1fr; gap: 15px; padding: 20px; }
+    .beneficio-item { padding-bottom: 15px; border-bottom: 1px solid #1d1d20; }
+    .beneficio-item:last-child { padding-bottom: 0; border-bottom: 0; }
+    .manifesto-marca { grid-template-columns: 1fr; gap: 24px; margin: 0 20px 55px; padding: 34px 24px; }
+    .manifesto-indice { order: 1; }
+    .manifesto-conteudo { order: 2; }
+    .manifesto-selo { order: 3; width: 92px; height: 92px; justify-self: start; }
+    .manifesto-selo span { font-size: 27px; }
     .admin-grid-2 { grid-template-columns: 1fr; gap: 0; }
     .admin-topo h1 { font-size: 32px; }
     .admin-acoes { align-items: flex-start; gap: 15px; flex-direction: column; }
@@ -1187,6 +1198,53 @@ a {
 .banner-pontos { position: absolute; bottom: 22px; right: 8%; display: flex; gap: 8px; }
 .banner-ponto { width: 28px; height: 4px; border: 0; background: #555; cursor: pointer; }
 .banner-ponto.ativo { background: var(--cor-gold); }
+.beneficios-marca {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 20px;
+    border-bottom: 1px solid var(--cor-borda);
+    gap: 24px;
+}
+.beneficio-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+.beneficio-numero {
+    color: var(--cor-gold);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+.beneficio-item strong, .beneficio-item span:last-child { display: block; }
+.beneficio-item strong { font-size: 13px; letter-spacing: .2px; }
+.beneficio-item span:last-child { color: #85858c; font-size: 12px; margin-top: 2px; }
+.manifesto-marca {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr) 150px;
+    align-items: center;
+    gap: 40px;
+    max-width: 1160px;
+    margin: 10px auto 80px;
+    padding: 58px 34px;
+    border-top: 1px solid var(--cor-borda);
+    border-bottom: 1px solid var(--cor-borda);
+    background: linear-gradient(100deg, #0c0c0d 0%, #15130e 52%, #080808 100%);
+}
+.manifesto-indice { align-self: start; color: #707078; font-size: 11px; font-weight: 700; letter-spacing: 2px; }
+.manifesto-conteudo { max-width: 670px; }
+.manifesto-kicker { color: var(--cor-gold); font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+.manifesto-conteudo h2 { max-width: 560px; margin: 10px 0 14px; font-size: clamp(30px, 4vw, 52px); line-height: 1.05; }
+.manifesto-conteudo > p:not(.manifesto-kicker) { max-width: 550px; color: #a9a9af; font-size: 15px; }
+.manifesto-link { display: inline-flex; gap: 12px; align-items: center; margin-top: 24px; color: var(--cor-gold); font-size: 13px; font-weight: 700; }
+.manifesto-link span { font-size: 20px; transition: transform .2s ease; }
+.manifesto-link:hover span { transform: translateX(5px); }
+.manifesto-selo { display: grid; place-items: center; width: 120px; height: 120px; border: 1px solid rgba(212, 175, 55, .55); border-radius: 50%; color: var(--cor-gold); text-align: center; transform: rotate(-8deg); }
+.manifesto-selo span { display: block; font-family: Georgia, serif; font-size: 34px; line-height: 1; }
+.manifesto-selo small { font-size: 8px; letter-spacing: 1.5px; line-height: 1.4; }
 .pagamento-label { display: block; color: #cbd5e1; font-size: 13px; margin-bottom: 7px; }
 .select-pagamento {
     width: 100%;
