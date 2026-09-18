@@ -8,6 +8,7 @@ from pathlib import Path
 
 import requests
 from flask import Flask, flash, redirect, render_template, request, session, url_for
+from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 
 try:
@@ -17,6 +18,7 @@ except ImportError:
 
 
 BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / ".env")
 DATABASE = BASE_DIR / "loja.sqlite3"
 LEGACY_DATABASE = BASE_DIR / "loja.db"
 UPLOAD_DIR = BASE_DIR / "static" / "imagens" / "produtos"

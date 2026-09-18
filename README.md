@@ -53,7 +53,7 @@ Gere uma chave forte com:
 .\venv\Scripts\python.exe -c "import secrets; print(secrets.token_urlsafe(32))"
 ```
 
-O arquivo `.env.example` e apenas um modelo. O projeto nao carrega `.env` automaticamente, e `.env` esta no `.gitignore`. Em producao, use o gerenciador de segredos do servidor.
+O arquivo `.env.example` e apenas um modelo. O aplicativo carrega `.env` automaticamente, e `.env` esta no `.gitignore`. Em producao, use o gerenciador de segredos do servidor.
 
 ## Rodar a aplicacao
 
