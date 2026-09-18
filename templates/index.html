@@ -795,23 +795,23 @@
             let numeroWhatsApp = "5511919877629";
             const formaPagamento = document.getElementById('forma-pagamento').value;
             const nomesPagamento = { pix: 'Pix', cartao: 'Cartão de crédito', boleto: 'Boleto bancário' };
-            let mensagem = "🔥 *PEDIDO - KURT GRIFFES* 🔥\n\n";
+            let mensagem = "Olá! Gostaria de atendimento.\n\n";
+            mensagem += "🔥 *PEDIDO - KURT GRIFFES* 🔥\n\n";
 
             let subtotalGeral = 0;
             carrinhoItens.forEach((item, index) => {
                 let totalItem = item.preco * item.qtd;
                 subtotalGeral += totalItem;
                 mensagem += `${index + 1}. *${item.nome}*\n`;
-                mensagem += `   - Tamanho: ${item.tamanho} | Cor: ${item.cor}\n`;
-                mensagem += `   - Qtd: ${item.qtd}x | R$ ${totalItem.toFixed(2).replace('.', ',')}\n\n`;
+                mensagem += `- Tamanho: ${item.tamanho} | Cor: ${item.cor}\n`;
+                mensagem += `- Qtd: ${item.qtd}x | R$ ${totalItem.toFixed(2).replace('.', ',')}\n`;
             });
 
-            mensagem += `💰 *Subtotal:* R$ ${subtotalGeral.toFixed(2).replace('.', ',')}\n`;
-            mensagem += `📦 *Frete:* A calcular no atendimento\n`;
+            mensagem += `\n💰 *Subtotal:* R$ ${subtotalGeral.toFixed(2).replace('.', ',')}\n`;
+            mensagem += `🚚 *Frete:* A calcular no atendimento\n`;
             mensagem += `💳 *Pagamento:* ${nomesPagamento[formaPagamento]}\n`;
             if (formaPagamento === 'pix') mensagem += `🔑 *Chave Pix:* {{ config['PIX_KEY'] }}\n`;
-            mensagem += `\n`;
-            mensagem += `Olá! Gostaria de fechar este pedido.`;
+            mensagem += `\nOlá! Gostaria de fechar este pedido.`;
 
             let url = `https://api.whatsapp.com/send?phone=${numeroWhatsApp}&text=${encodeURIComponent(mensagem)}`;
             window.open(url, '_blank');

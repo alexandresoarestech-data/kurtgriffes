@@ -1188,7 +1188,35 @@ a {
 .banner-ponto { width: 28px; height: 4px; border: 0; background: #555; cursor: pointer; }
 .banner-ponto.ativo { background: var(--cor-gold); }
 .pagamento-label { display: block; color: #cbd5e1; font-size: 13px; margin-bottom: 7px; }
-.select-pagamento { width: 100%; padding: 12px; margin-bottom: 8px; border-radius: 7px; background: #141416; color: white; border: 1px solid #3f3f46; }
+.select-pagamento {
+    width: 100%;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    border-radius: 7px;
+    background: #141416;
+    color: white;
+    border: 1px solid #3f3f46;
+    font-size: 16px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--cor-gold) 50%), linear-gradient(135deg, var(--cor-gold) 50%, transparent 50%);
+    background-position: calc(100% - 18px) calc(50% - 3px), calc(100% - 12px) calc(50% - 3px);
+    background-size: 6px 6px, 6px 6px;
+    background-repeat: no-repeat;
+    cursor: pointer;
+}
+
+.select-pagamento option {
+    background: #111113;
+    color: #fff;
+    padding: 10px;
+}
+
+.select-pagamento:focus {
+    outline: 2px solid rgba(212, 175, 55, 0.35);
+    border-color: rgba(212, 175, 55, 0.65);
+}
 .pix-chave { color: var(--cor-gold); font-size: 12px; overflow-wrap: anywhere; margin-bottom: 14px; }
 .admin-body {
     min-height: 100vh;
