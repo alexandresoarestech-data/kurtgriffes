@@ -1221,12 +1221,17 @@ a {
 .btn-modal-cancelar:hover { background: #2b2b30; }
 .btn-modal-excluir { border: 1px solid #b91c1c; background: #991b1b; color: white; }
 .btn-modal-excluir:hover { background: #b91c1c; }
-.admin-form-shell { max-width: 720px; }
-.admin-form { display: grid; gap: 10px; }
-.admin-form label { color: #ddd; font-weight: 600; margin-top: 10px; }
-.admin-form small { color: #888; font-weight: 400; }
-.admin-form input, .admin-form select { background: #18181b; color: white; border: 1px solid #3f3f46; border-radius: 6px; padding: 13px; font: inherit; }
-.admin-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.admin-form-shell { max-width: 760px; }
+.admin-topo-form { margin-bottom: 28px; }
+.admin-topo-form .admin-kicker { margin-bottom: 6px; }
+.admin-voltar-link { color: var(--cor-gold); font-size: 18px; font-weight: 700; line-height: 1; }
+.admin-form { display: grid; gap: 18px; margin-top: 8px; }
+.admin-form label { display: block; color: #e5e7eb; font-weight: 700; margin-bottom: 8px; font-size: 18px; }
+.admin-form small { color: #9ca3af; font-weight: 400; font-size: 13px; }
+.admin-form input, .admin-form select { width: 100%; background: rgba(24, 24, 27, 0.95); color: white; border: 1px solid #3f3f46; border-radius: 8px; padding: 15px 14px; font: inherit; font-size: 17px; min-height: 54px; transition: border-color .2s ease, box-shadow .2s ease; }
+.admin-form input:focus, .admin-form select:focus { outline: none; border-color: rgba(212, 175, 55, 0.8); box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.12); }
+.admin-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+.produto-form .btn-comprar { width: 100%; min-height: 58px; margin-top: 8px; font-size: 24px; font-weight: 800; border-radius: 10px; }
 .flash { padding: 12px 15px; border-radius: 6px; margin-bottom: 18px; }
 .flash.erro { background: #451a1a; color: #fecaca; }
 .flash.sucesso { background: #123b2c; color: #bbf7d0; }
