@@ -43,7 +43,8 @@ app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = os.environ.get("COOKIE_SECURE", "0") == "1"
-app.config["GOOGLE_DRIVE_CREDENTIALS"] = os.environ.get("GOOGLE_DRIVE_CREDENTIALS", "")
+app.config["GOOGLE_DRIVE_CLIENT_SECRET"] = os.environ.get("GOOGLE_DRIVE_CLIENT_SECRET", "")
+app.config["GOOGLE_DRIVE_TOKEN"] = os.environ.get("GOOGLE_DRIVE_TOKEN", "")
 app.config["GOOGLE_DRIVE_ROOT_FOLDER_ID"] = os.environ.get("GOOGLE_DRIVE_ROOT_FOLDER_ID", "")
 
 
@@ -139,8 +140,21 @@ def enviar_imagem_para_drive(caminho, categoria, nome_produto):
         caminho,
         CATEGORIAS.get(categoria, (categoria, ""))[0],
         nome_produto,
-        app.config["GOOGLE_DRIVE_CREDENTIALS"],
+        app.config["GOOGLE_DRIVE_CLIENT_SECRET"],
+        app.config["GOOGLE_DRIVE_TOKEN"],
         app.config["GOOGLE_DRIVE_ROOT_FOLDER_ID"],
+    )
+
+
+def remover_imagem_do_drive(file_id):
+    remover_imagem(file_id, app.config["GOOGLE_DRIVE_CLIENT_SECRET"], app.config["GOOGLE_DRIVE_TOKEN"])
+
+
+def drive_esta_configurado():
+    return bool(
+        app.config["GOOGLE_DRIVE_CLIENT_SECRET"]
+        and Path(app.config["GOOGLE_DRIVE_CLIENT_SECRET"]).is_file()
+        and app.config["GOOGLE_DRIVE_ROOT_FOLDER_ID"]
     )
 
 
@@ -277,10 +291,17 @@ def admin_novo_produto():
             except Exception:
                 flash("Uma das imagens não pôde ser processada.", "erro")
 
+        drive_ids = []
+        for imagem in imagens:
+            file_id = enviar_imagem_para_drive(BASE_DIR / "static" / imagem, categoria, nome)
+            drive_ids.append(file_id)
+        if drive_esta_configurado() and imagens and not any(drive_ids):
+            flash("Produto salvo localmente, mas não foi possível enviar as fotos ao Google Drive.", "erro")
+
         with conectar_banco() as banco:
             banco.execute(
-                "INSERT INTO produtos (nome, categoria, preco, cores, estoque, imagens, data_criacao, hora_criacao) VALUES (?, ?, ?, ?, ?, ?, date('now'), time('now'))",
-                (nome, categoria, preco, cores, estoque, "|".join(imagens)),
+                "INSERT INTO produtos (nome, categoria, preco, cores, estoque, imagens, drive_imagens, data_criacao, hora_criacao) VALUES (?, ?, ?, ?, ?, ?, ?, date('now'), time('now'))",
+                (nome, categoria, preco, cores, estoque, "|".join(imagens), ids_para_json(drive_ids)),
             )
             banco.commit()
         flash("Produto criado com sucesso.", "sucesso")
@@ -314,11 +335,15 @@ def admin_editar_produto(produto_id):
             return render_template("admin_novo.html", categorias=CATEGORIAS, produto=produto, modo_edicao=True)
 
         imagens_atuais = [imagem for imagem in (produto["imagens"] or "").split("|") if imagem]
+        drive_ids_atuais = ids_de_json(produto["drive_imagens"], len(imagens_atuais))
         imagens_mantidas = [imagem for imagem in request.form.getlist("imagens_mantidas") if imagem in imagens_atuais]
         imagens_removidas = set(imagens_atuais) - set(imagens_mantidas)
         imagens = list(imagens_mantidas)
+        drive_ids = [drive_ids_atuais[imagens_atuais.index(imagem)] for imagem in imagens_mantidas]
 
         for caminho_relativo in imagens_removidas:
+            indice = imagens_atuais.index(caminho_relativo)
+            remover_imagem_do_drive(drive_ids_atuais[indice])
             caminho = (BASE_DIR / "static" / caminho_relativo).resolve()
             static_dir = (BASE_DIR / "static").resolve()
             if static_dir in caminho.parents and caminho.is_file():
@@ -342,14 +367,19 @@ def admin_editar_produto(produto_id):
                 else:
                     destino = pasta / f"{nome_seguro}-{os.urandom(2).hex()}{Path(arquivo.filename).suffix.lower()}"
                     arquivo.save(destino)
-                imagens.append(destino.relative_to(BASE_DIR / "static").as_posix())
+                imagem_relativa = destino.relative_to(BASE_DIR / "static").as_posix()
+                imagens.append(imagem_relativa)
+                drive_ids.append(enviar_imagem_para_drive(destino, categoria, nome))
             except Exception:
                 flash("Uma das imagens não pôde ser processada.", "erro")
 
+        if drive_esta_configurado() and request.files.getlist("fotos") and imagens and not any(drive_ids):
+            flash("Produto atualizado localmente, mas não foi possível sincronizar as fotos com o Google Drive.", "erro")
+
         with conectar_banco() as banco:
             banco.execute(
-                "UPDATE produtos SET nome = ?, categoria = ?, preco = ?, cores = ?, estoque = ?, imagens = ?, data_criacao = COALESCE(data_criacao, date('now')), hora_criacao = COALESCE(hora_criacao, time('now')) WHERE id = ?",
-                (nome, categoria, preco, cores, estoque, "|".join(imagens), produto_id),
+                "UPDATE produtos SET nome = ?, categoria = ?, preco = ?, cores = ?, estoque = ?, imagens = ?, drive_imagens = ?, data_criacao = COALESCE(data_criacao, date('now')), hora_criacao = COALESCE(hora_criacao, time('now')) WHERE id = ?",
+                (nome, categoria, preco, cores, estoque, "|".join(imagens), ids_para_json(drive_ids), produto_id),
             )
             banco.commit()
         flash("Produto atualizado com sucesso.", "sucesso")
