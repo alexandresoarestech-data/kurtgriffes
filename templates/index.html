@@ -13,7 +13,7 @@
     <!-- Conectando o arquivo de estilos CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
+<body data-taxa-entrega="{{ config['DELIVERY_FEE'] }}">
 
     <!-- CABEÇALHO INTERATIVO -->
     <header class="cabecalho">
@@ -407,11 +407,6 @@
                 <span id="carrinho-subtotal-valor">R$ 0,00</span>
             </div>
             <p class="carrinho-frete-texto">Frete calculado no checkout</p>
-            <label class="pagamento-label" for="forma-pagamento">Forma de pagamento</label>
-            <select id="forma-pagamento" class="select-pagamento">
-                <option value="pix">Pix</option>
-                <option value="cartao">Cartão de crédito</option>
-            </select>
             
             <button type="button" class="btn-finalizar-compra" onclick="finalizarCompraWhatsApp()">
                 Finalizar Compra &rarr;
@@ -429,6 +424,81 @@
                     <span class="badge-pix-gold">PIX</span>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div id="modal-checkout" class="modal-overlay" aria-hidden="true">
+        <div class="modal-conteudo checkout-conteudo" role="dialog" aria-modal="true" aria-labelledby="checkout-titulo">
+            <button class="modal-fechar" type="button" onclick="fecharCheckout()" aria-label="Fechar">&times;</button>
+            <h3 id="checkout-titulo">Finalizar pedido</h3>
+            <p class="checkout-intro">Preencha seus dados para enviarmos o pedido corretamente.</p>
+            <form id="form-checkout" class="checkout-form">
+                <div class="checkout-grid-2">
+                    <div class="checkout-campo">
+                        <label for="cliente-nome">Nome *</label>
+                        <input id="cliente-nome" name="nome" type="text" autocomplete="given-name" required>
+                    </div>
+                    <div class="checkout-campo">
+                        <label for="cliente-sobrenome">Sobrenome *</label>
+                        <input id="cliente-sobrenome" name="sobrenome" type="text" autocomplete="family-name" required>
+                    </div>
+                </div>
+                <div class="checkout-campo">
+                    <label for="cliente-telefone">Telefone / WhatsApp *</label>
+                    <input id="cliente-telefone" name="telefone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(11) 99999-9999" required>
+                </div>
+                <div class="checkout-campo">
+                    <label for="tipo-entrega">Forma de entrega *</label>
+                    <select id="tipo-entrega" name="entrega" required onchange="alternarCamposEntrega()">
+                        <option value="">Selecione uma opção</option>
+                        <option value="entrega">Entrega</option>
+                        <option value="retirada">Retirada na loja</option>
+                    </select>
+                </div>
+                <div id="campos-endereco" class="checkout-endereco" hidden>
+                    <div class="checkout-grid-endereco">
+                        <div class="checkout-campo checkout-campo-rua">
+                            <label for="endereco-rua">Rua / avenida *</label>
+                            <input id="endereco-rua" name="rua" type="text" autocomplete="street-address">
+                        </div>
+                        <div class="checkout-campo">
+                            <label for="endereco-numero">Número *</label>
+                            <input id="endereco-numero" name="numero" type="text">
+                        </div>
+                    </div>
+                    <div class="checkout-grid-2">
+                        <div class="checkout-campo">
+                            <label for="endereco-bairro">Bairro *</label>
+                            <input id="endereco-bairro" name="bairro" type="text" autocomplete="address-level3">
+                        </div>
+                        <div class="checkout-campo">
+                            <label for="endereco-cidade">Cidade *</label>
+                            <input id="endereco-cidade" name="cidade" type="text" autocomplete="address-level2" value="Itaquaquecetuba">
+                        </div>
+                    </div>
+                    <div class="checkout-grid-2">
+                        <div class="checkout-campo">
+                            <label for="endereco-estado">Estado *</label>
+                            <input id="endereco-estado" name="estado" type="text" autocomplete="address-level1" value="SP">
+                        </div>
+                        <div class="checkout-campo">
+                            <label for="endereco-complemento">Complemento</label>
+                            <input id="endereco-complemento" name="complemento" type="text" placeholder="Ex.: portão branco">
+                        </div>
+                    </div>
+                    <p class="checkout-ajuda">O link do endereço será incluído automaticamente no pedido.</p>
+                </div>
+                <div class="checkout-campo">
+                    <label for="checkout-pagamento">Forma de pagamento *</label>
+                    <select id="checkout-pagamento" name="pagamento" required>
+                        <option value="pix">Pix</option>
+                        <option value="cartao_credito">Cartão de crédito</option>
+                        <option value="cartao_debito">Cartão de débito</option>
+                    </select>
+                </div>
+                <p id="checkout-aviso" class="modal-aviso-erro"></p>
+                <button class="btn-modal-confirmar" type="submit">Revisar e enviar pedido</button>
+            </form>
         </div>
     </div>
 
@@ -801,33 +871,123 @@
             document.getElementById('overlay-carrinho').style.display = 'none';
         }
 
+        const taxaEntrega = Number(document.body.dataset.taxaEntrega || 0);
+
         function finalizarCompraWhatsApp() {
             if (carrinhoItens.length === 0) {
                 alert('Seu carrinho está vazio!');
                 return;
             }
 
-            let numeroWhatsApp = "5511919877629";
-            const formaPagamento = document.getElementById('forma-pagamento').value;
-            const nomesPagamento = { pix: 'Pix', cartao: 'Cartão de crédito' };
-            let mensagem = "Olá! Gostaria de fazer um pedido.\n\n";
-            mensagem += "*PEDIDO KURT GRIFFES*\n\n";
+            document.getElementById('modal-checkout').style.display = 'flex';
+            document.getElementById('modal-checkout').setAttribute('aria-hidden', 'false');
+            document.getElementById('cliente-nome').focus();
+        }
 
-            let subtotalGeral = 0;
-            carrinhoItens.forEach((item, index) => {
-                let totalItem = item.preco * item.qtd;
-                subtotalGeral += totalItem;
-                mensagem += `${index + 1}. *${item.nome}*\n`;
-                mensagem += `Tamanho: ${item.tamanho} | Cor: ${item.cor}\n`;
-                mensagem += `Quantidade: ${item.qtd}x | R$ ${totalItem.toFixed(2).replace('.', ',')}\n\n`;
+        function fecharCheckout() {
+            document.getElementById('modal-checkout').style.display = 'none';
+            document.getElementById('modal-checkout').setAttribute('aria-hidden', 'true');
+        }
+
+        function alternarCamposEntrega() {
+            const tipoEntrega = document.getElementById('tipo-entrega').value;
+            const camposEndereco = document.getElementById('campos-endereco');
+            const campos = camposEndereco.querySelectorAll('input');
+            const deveExigirEndereco = tipoEntrega === 'entrega';
+            camposEndereco.hidden = !deveExigirEndereco;
+            campos.forEach(campo => {
+                campo.disabled = !deveExigirEndereco;
+                campo.required = deveExigirEndereco && campo.id !== 'endereco-complemento';
             });
+        }
 
-            mensagem += `*Subtotal:* R$ ${subtotalGeral.toFixed(2).replace('.', ',')}\n`;
-            mensagem += `*Frete:* A calcular no atendimento\n`;
-            mensagem += `*Forma de pagamento:* ${nomesPagamento[formaPagamento]}\n\n`;
-            mensagem += `Aguardo as instruções para finalizar.`;
+        function formatarTelefone(telefone) {
+            const numeros = telefone.replace(/\D/g, '');
+            if (numeros.length === 11) {
+                return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7)}`;
+            }
+            if (numeros.length === 10) {
+                return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 6)}-${numeros.slice(6)}`;
+            }
+            return telefone.trim();
+        }
 
-            let url = `https://api.whatsapp.com/send?phone=${numeroWhatsApp}&text=${encodeURIComponent(mensagem)}`;
+        function formatarMoeda(valor) {
+            return `R$ ${valor.toFixed(2).replace('.', ',')}`;
+        }
+
+        function criarNumeroPedido(data) {
+            const dataPedido = data.toISOString().replace(/[-:TZ.]/g, '').slice(0, 14);
+            return `KG-${dataPedido}`;
+        }
+
+        document.getElementById('form-checkout').addEventListener('submit', (evento) => {
+            evento.preventDefault();
+            const formulario = evento.currentTarget;
+            const dados = new FormData(formulario);
+            const tipoEntrega = dados.get('entrega');
+            const telefone = dados.get('telefone').replace(/\D/g, '');
+            const aviso = document.getElementById('checkout-aviso');
+
+            if (telefone.length < 10 || telefone.length > 11) {
+                aviso.textContent = 'Informe um telefone válido com DDD.';
+                document.getElementById('cliente-telefone').focus();
+                return;
+            }
+            if (!formulario.checkValidity()) {
+                formulario.reportValidity();
+                return;
+            }
+
+            const agora = new Date();
+            const nomeCliente = `${dados.get('nome').trim()} ${dados.get('sobrenome').trim()}`;
+            const subtotal = carrinhoItens.reduce((soma, item) => soma + (item.preco * item.qtd), 0);
+            const valorEntrega = tipoEntrega === 'entrega' ? taxaEntrega : 0;
+            const total = subtotal + valorEntrega;
+            const pagamento = {
+                pix: 'Pix',
+                cartao_credito: 'Cartão de crédito',
+                cartao_debito: 'Cartão de débito'
+            }[dados.get('pagamento')];
+            let mensagem = '#### NOVO PEDIDO ####\n\n';
+            mensagem += `#️⃣ Nº pedido: ${criarNumeroPedido(agora)}\n`;
+            mensagem += `Feito em: ${agora.toLocaleDateString('pt-BR')} ${agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}\n\n`;
+            mensagem += `👤 ${nomeCliente}\n`;
+            mensagem += `📞 ${formatarTelefone(dados.get('telefone'))}\n\n`;
+
+            if (tipoEntrega === 'entrega') {
+                const endereco = `${dados.get('rua')} ${dados.get('numero')}, ${dados.get('bairro')}, ${dados.get('cidade')} ${dados.get('estado')}`;
+                const complemento = dados.get('complemento').trim();
+                const mapa = `https://maps.google.com/?q=${encodeURIComponent(endereco)}`;
+                mensagem += '🛵 Endereço de entrega\n';
+                mensagem += `${dados.get('rua')} ${dados.get('numero')}\n`;
+                mensagem += `Bairro: ${dados.get('bairro')}\n`;
+                mensagem += `Cidade: ${dados.get('cidade')} - ${dados.get('estado')}\n`;
+                if (complemento) mensagem += `Complemento: ${complemento}\n`;
+                mensagem += `Link do endereço:\n${mapa}\n\n`;
+            } else {
+                mensagem += '🏬 Retirada na loja\n';
+                mensagem += 'O cliente fará a retirada no endereço da loja.\n\n';
+            }
+
+            mensagem += '------- ITENS DO PEDIDO -------\n\n';
+            carrinhoItens.forEach((item, index) => {
+                const totalItem = item.preco * item.qtd;
+                mensagem += `*${index + 1}. ${item.qtd} x ${item.nome}*\n`;
+                mensagem += `  Tamanho: ${item.tamanho} | Cor: ${item.cor}\n`;
+                mensagem += `  ${item.qtd} x ${formatarMoeda(item.preco)} = ${formatarMoeda(totalItem)}\n\n`;
+            });
+            mensagem += '-------------------------------\n\n';
+            mensagem += `SUBTOTAL: ${formatarMoeda(subtotal)}\n`;
+            mensagem += `ENTREGA: ${tipoEntrega === 'retirada' ? 'Retirada na loja' : (taxaEntrega > 0 ? formatarMoeda(taxaEntrega) : 'A combinar')}\n`;
+            const valorFinal = taxaEntrega > 0 || tipoEntrega === 'retirada' ? formatarMoeda(total) : `${formatarMoeda(subtotal)} + entrega`;
+            mensagem += `*VALOR FINAL: ${valorFinal}*\n\n`;
+            mensagem += 'PAGAMENTO\n';
+            mensagem += `*${pagamento}: ${valorFinal}*`;
+
+            let numeroWhatsApp = "5511919877629";
+            const url = `https://api.whatsapp.com/send?phone=${numeroWhatsApp}&text=${encodeURIComponent(mensagem)}`;
+            fecharCheckout();
             window.open(url, '_blank');
         }
 

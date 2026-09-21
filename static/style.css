@@ -457,6 +457,74 @@ a {
     font-family: 'Inter', sans-serif;
 }
 
+.checkout-conteudo {
+    max-height: 92vh;
+    overflow-y: auto;
+}
+
+.checkout-intro {
+    color: var(--cor-texto-secundario);
+    font-size: 14px;
+    margin: -12px 0 24px;
+}
+
+.checkout-form {
+    display: grid;
+    gap: 15px;
+}
+
+.checkout-grid-2,
+.checkout-grid-endereco {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.checkout-grid-endereco {
+    grid-template-columns: minmax(0, 1.5fr) minmax(90px, .5fr);
+}
+
+.checkout-endereco {
+    display: grid;
+    gap: 14px;
+    padding: 16px;
+    border: 1px solid #29292d;
+    border-radius: 10px;
+    background: #101012;
+}
+
+.checkout-campo label {
+    display: block;
+    color: #cbd5e1;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.checkout-campo input,
+.checkout-campo select {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 1px solid #3f3f46;
+    border-radius: 7px;
+    background: #18181b;
+    color: white;
+    font: inherit;
+    outline: none;
+}
+
+.checkout-campo input:focus,
+.checkout-campo select:focus {
+    border-color: var(--cor-gold);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, .12);
+}
+
+.checkout-ajuda {
+    color: #8f8f98;
+    font-size: 12px;
+}
+
 .modal-fechar {
     position: absolute;
     top: 20px; right: 25px;
@@ -1175,6 +1243,20 @@ a {
         width: 25px;
         height: 25px;
         font-size: 12px;
+    }
+
+    .checkout-conteudo {
+        width: calc(100% - 24px);
+        padding: 28px 20px 22px;
+    }
+
+    .checkout-grid-2,
+    .checkout-grid-endereco {
+        grid-template-columns: 1fr;
+    }
+
+    .checkout-endereco {
+        padding: 12px;
     }
 }
 

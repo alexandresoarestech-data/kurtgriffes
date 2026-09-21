@@ -114,6 +114,9 @@ def converter_preco(valor):
         return 0.0
 
 
+app.config["DELIVERY_FEE"] = converter_preco(os.environ.get("DELIVERY_FEE", "0"))
+
+
 def listar_imagens_pasta(nome_pasta):
     pasta = UPLOAD_DIR / nome_pasta
     if not nome_pasta or not pasta.exists():
