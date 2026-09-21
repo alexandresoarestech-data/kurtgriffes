@@ -8,19 +8,11 @@ from pathlib import Path
 
 try:
     import psycopg
+    from psycopg.rows import dict_row
 except ImportError:
     psycopg = None
+    dict_row = None
 
-
-class RowCompat(dict):
-    def __getitem__(self, chave):
-        if isinstance(chave, int):
-            return list(self.values())[chave]
-        return super().__getitem__(chave)
-
-
-def postgres_row(cursor, valores):
-    return RowCompat(zip((coluna.name for coluna in cursor.description), valores))
 
 import requests
 from flask import Flask, flash, redirect, render_template, request, session, url_for
@@ -100,7 +92,7 @@ def conectar_banco():
     if DATABASE_URL:
         if psycopg is None:
             raise RuntimeError("Instale psycopg[binary] para usar DATABASE_URL.")
-        return ConexaoCompat(psycopg.connect(DATABASE_URL, row_factory=postgres_row), postgres=True)
+        return ConexaoCompat(psycopg.connect(DATABASE_URL, row_factory=dict_row), postgres=True)
     conexao = sqlite3.connect(DATABASE, timeout=30)
     conexao.execute("PRAGMA busy_timeout = 30000")
     conexao.row_factory = sqlite3.Row
@@ -135,17 +127,18 @@ def inicializar_banco():
         if "drive_imagens" not in colunas:
             banco.execute("ALTER TABLE produtos ADD COLUMN drive_imagens TEXT DEFAULT '[]'")
 
+        valores_data = "CURRENT_DATE::text, CURRENT_TIME::text" if DATABASE_URL else "CURRENT_DATE, CURRENT_TIME"
         banco.execute(
-            """UPDATE produtos
-               SET data_criacao = COALESCE(data_criacao, CURRENT_DATE),
-                   hora_criacao = COALESCE(hora_criacao, CURRENT_TIME)
+            f"""UPDATE produtos
+               SET data_criacao = COALESCE(data_criacao, {valores_data.split(', ')[0]}),
+                   hora_criacao = COALESCE(hora_criacao, {valores_data.split(', ')[1]})
                WHERE data_criacao IS NULL OR hora_criacao IS NULL"""
         )
 
-        quantidade = banco.execute("SELECT COUNT(*) FROM produtos").fetchone()[0]
+        quantidade = banco.execute("SELECT COUNT(*) AS quantidade FROM produtos").fetchone()["quantidade"] if DATABASE_URL else banco.execute("SELECT COUNT(*) FROM produtos").fetchone()[0]
         if quantidade == 0 and os.environ.get("IMPORTAR_DADOS_INICIAIS", "1") == "1":
             migrar_banco_antigo(banco)
-            quantidade = banco.execute("SELECT COUNT(*) FROM produtos").fetchone()[0]
+            quantidade = banco.execute("SELECT COUNT(*) AS quantidade FROM produtos").fetchone()["quantidade"] if DATABASE_URL else banco.execute("SELECT COUNT(*) FROM produtos").fetchone()[0]
             if quantidade == 0:
                 migrar_planilha(banco)
 
