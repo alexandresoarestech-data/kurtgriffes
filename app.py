@@ -394,6 +394,10 @@ def admin_excluir_produto(produto_id):
     if bloqueio:
         return bloqueio
     with conectar_banco() as banco:
+        produto = banco.execute("SELECT imagens, drive_imagens FROM produtos WHERE id = ?", (produto_id,)).fetchone()
+        if produto:
+            for file_id in ids_de_json(produto["drive_imagens"]):
+                remover_imagem_do_drive(file_id)
         banco.execute("DELETE FROM produtos WHERE id = ?", (produto_id,))
         banco.commit()
     flash("Produto removido.", "sucesso")
