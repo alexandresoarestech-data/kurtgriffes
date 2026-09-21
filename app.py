@@ -11,6 +11,8 @@ from flask import Flask, flash, redirect, render_template, request, session, url
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 
+from drive_storage import enviar_imagem, ids_de_json, ids_para_json, remover_imagem
+
 try:
     from PIL import Image
 except ImportError:
@@ -41,6 +43,8 @@ app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = os.environ.get("COOKIE_SECURE", "0") == "1"
+app.config["GOOGLE_DRIVE_CREDENTIALS"] = os.environ.get("GOOGLE_DRIVE_CREDENTIALS", "")
+app.config["GOOGLE_DRIVE_ROOT_FOLDER_ID"] = os.environ.get("GOOGLE_DRIVE_ROOT_FOLDER_ID", "")
 
 
 def conectar_banco():
@@ -71,6 +75,8 @@ def inicializar_banco():
             banco.execute("ALTER TABLE produtos ADD COLUMN data_criacao TEXT")
         if "hora_criacao" not in colunas:
             banco.execute("ALTER TABLE produtos ADD COLUMN hora_criacao TEXT")
+        if "drive_imagens" not in colunas:
+            banco.execute("ALTER TABLE produtos ADD COLUMN drive_imagens TEXT DEFAULT '[]'")
 
         banco.execute(
             """UPDATE produtos
@@ -80,7 +86,7 @@ def inicializar_banco():
         )
 
         quantidade = banco.execute("SELECT COUNT(*) FROM produtos").fetchone()[0]
-        if quantidade == 0:
+        if quantidade == 0 and os.environ.get("IMPORTAR_DADOS_INICIAIS", "1") == "1":
             migrar_banco_antigo(banco)
             quantidade = banco.execute("SELECT COUNT(*) FROM produtos").fetchone()[0]
             if quantidade == 0:
@@ -126,6 +132,16 @@ def listar_imagens_pasta(nome_pasta):
         for arquivo in sorted(pasta.iterdir())
         if arquivo.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp"}
     ]
+
+
+def enviar_imagem_para_drive(caminho, categoria, nome_produto):
+    return enviar_imagem(
+        caminho,
+        CATEGORIAS.get(categoria, (categoria, ""))[0],
+        nome_produto,
+        app.config["GOOGLE_DRIVE_CREDENTIALS"],
+        app.config["GOOGLE_DRIVE_ROOT_FOLDER_ID"],
+    )
 
 
 def migrar_planilha(banco):
