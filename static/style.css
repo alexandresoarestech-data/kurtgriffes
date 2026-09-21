@@ -520,6 +520,12 @@ a {
     box-shadow: 0 0 0 3px rgba(212, 175, 55, .12);
 }
 
+.checkout-campo input[readonly] {
+    background: #202024;
+    color: #d4d4d8;
+    cursor: not-allowed;
+}
+
 .checkout-ajuda {
     color: #8f8f98;
     font-size: 12px;
@@ -1112,6 +1118,23 @@ a {
 
 .btn-continuar-comprando:hover {
     background-color: #1c1c21;
+}
+
+.btn-esvaziar-carrinho {
+    width: 100%;
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #7f1d1d;
+    border-radius: 8px;
+    background: transparent;
+    color: #fca5a5;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.btn-esvaziar-carrinho:hover {
+    background: #3f1717;
 }
 
 .carrinho-pagamentos {

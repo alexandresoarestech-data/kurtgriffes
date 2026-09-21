@@ -411,6 +411,10 @@
             <button type="button" class="btn-finalizar-compra" onclick="finalizarCompraWhatsApp()">
                 Finalizar Compra &rarr;
             </button>
+
+            <button type="button" class="btn-esvaziar-carrinho" onclick="esvaziarCarrinho()">
+                Esvaziar carrinho
+            </button>
             
             <button type="button" class="btn-continuar-comprando" onclick="fecharCarrinhoLateral()">
                 Continuar Comprando
@@ -456,10 +460,15 @@
                     </select>
                 </div>
                 <div id="campos-endereco" class="checkout-endereco" hidden>
+                    <div class="checkout-campo">
+                        <label for="endereco-cep">CEP *</label>
+                        <input id="endereco-cep" name="cep" type="text" inputmode="numeric" autocomplete="postal-code" placeholder="00000-000" maxlength="9">
+                        <span id="cep-status" class="checkout-ajuda" aria-live="polite"></span>
+                    </div>
                     <div class="checkout-grid-endereco">
                         <div class="checkout-campo checkout-campo-rua">
                             <label for="endereco-rua">Rua / avenida *</label>
-                            <input id="endereco-rua" name="rua" type="text" autocomplete="street-address">
+                            <input id="endereco-rua" name="rua" type="text" autocomplete="street-address" readonly>
                         </div>
                         <div class="checkout-campo">
                             <label for="endereco-numero">Número *</label>
@@ -469,17 +478,17 @@
                     <div class="checkout-grid-2">
                         <div class="checkout-campo">
                             <label for="endereco-bairro">Bairro *</label>
-                            <input id="endereco-bairro" name="bairro" type="text" autocomplete="address-level3">
+                            <input id="endereco-bairro" name="bairro" type="text" autocomplete="address-level3" readonly>
                         </div>
                         <div class="checkout-campo">
                             <label for="endereco-cidade">Cidade *</label>
-                            <input id="endereco-cidade" name="cidade" type="text" autocomplete="address-level2" value="Itaquaquecetuba">
+                            <input id="endereco-cidade" name="cidade" type="text" autocomplete="address-level2" readonly>
                         </div>
                     </div>
                     <div class="checkout-grid-2">
                         <div class="checkout-campo">
                             <label for="endereco-estado">Estado *</label>
-                            <input id="endereco-estado" name="estado" type="text" autocomplete="address-level1" value="SP">
+                            <input id="endereco-estado" name="estado" type="text" autocomplete="address-level1" readonly>
                         </div>
                         <div class="checkout-campo">
                             <label for="endereco-complemento">Complemento</label>
@@ -821,6 +830,15 @@
             salvarCarrinho();
         }
 
+        function esvaziarCarrinho() {
+            if (carrinhoItens.length === 0) return;
+            if (!confirm('Deseja remover todos os produtos do carrinho?')) return;
+            carrinhoItens = [];
+            atualizarCarrinhoUI();
+            atualizarContadorTopo();
+            salvarCarrinho();
+        }
+
         function irParaCheckoutWhatsApp() {
             fecharModal();
             abrirCarrinhoLateral();
@@ -899,7 +917,62 @@
                 campo.disabled = !deveExigirEndereco;
                 campo.required = deveExigirEndereco && campo.id !== 'endereco-complemento';
             });
+            if (!deveExigirEndereco) document.getElementById('cep-status').textContent = '';
         }
+
+        function formatarCep(valor) {
+            const numeros = valor.replace(/\D/g, '').slice(0, 8);
+            return numeros.length > 5 ? `${numeros.slice(0, 5)}-${numeros.slice(5)}` : numeros;
+        }
+
+        async function buscarCep() {
+            const campoCep = document.getElementById('endereco-cep');
+            const statusCep = document.getElementById('cep-status');
+            const cep = campoCep.value.replace(/\D/g, '');
+            campoCep.value = formatarCep(campoCep.value);
+            if (cep.length !== 8) {
+                statusCep.textContent = cep ? 'Digite um CEP com 8 números.' : '';
+                return;
+            }
+
+            statusCep.textContent = 'Buscando endereço...';
+            try {
+                const resposta = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+                if (!resposta.ok) throw new Error('Falha na consulta');
+                const endereco = await resposta.json();
+                if (endereco.erro) throw new Error('CEP não encontrado');
+                document.getElementById('endereco-rua').value = endereco.logradouro || '';
+                document.getElementById('endereco-bairro').value = endereco.bairro || '';
+                document.getElementById('endereco-cidade').value = endereco.localidade || '';
+                document.getElementById('endereco-estado').value = endereco.uf || '';
+                statusCep.textContent = 'Endereço preenchido automaticamente.';
+            } catch (erro) {
+                statusCep.textContent = 'CEP não encontrado. Confira os números e tente novamente.';
+                document.getElementById('endereco-rua').value = '';
+                document.getElementById('endereco-bairro').value = '';
+                document.getElementById('endereco-cidade').value = '';
+                document.getElementById('endereco-estado').value = '';
+            }
+        }
+
+        function formatarTelefoneInput(valor) {
+            let numeros = valor.replace(/\D/g, '');
+            if (numeros.startsWith('55') && numeros.length > 11) numeros = numeros.slice(2);
+            numeros = numeros.slice(0, 11);
+            if (numeros.length <= 2) return numeros.length ? `(${numeros}` : '';
+            if (numeros.length <= 6) return `(${numeros.slice(0, 2)}) ${numeros.slice(2)}`;
+            if (numeros.length <= 10) return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 6)}-${numeros.slice(6)}`;
+            return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7)}`;
+        }
+
+        document.getElementById('endereco-cep').addEventListener('input', (evento) => {
+            evento.target.value = formatarCep(evento.target.value);
+            if (evento.target.value.replace(/\D/g, '').length === 8) buscarCep();
+        });
+        document.getElementById('endereco-cep').addEventListener('blur', buscarCep);
+        document.getElementById('cliente-telefone').addEventListener('input', (evento) => {
+            evento.target.value = formatarTelefoneInput(evento.target.value);
+        });
 
         function formatarTelefone(telefone) {
             const numeros = telefone.replace(/\D/g, '');
@@ -960,6 +1033,7 @@
                 const complemento = dados.get('complemento').trim();
                 const mapa = `https://maps.google.com/?q=${encodeURIComponent(endereco)}`;
                 mensagem += '🛵 Endereço de entrega\n';
+                mensagem += `CEP: ${dados.get('cep')}\n`;
                 mensagem += `${dados.get('rua')} ${dados.get('numero')}\n`;
                 mensagem += `Bairro: ${dados.get('bairro')}\n`;
                 mensagem += `Cidade: ${dados.get('cidade')} - ${dados.get('estado')}\n`;
@@ -989,7 +1063,7 @@
             const url = `https://api.whatsapp.com/send?phone=${numeroWhatsApp}&text=${encodeURIComponent(mensagem)}`;
             fecharCheckout();
             window.open(url, '_blank');
-        }
+        });
 
         atualizarContadorTopo();
     </script>
