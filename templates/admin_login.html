@@ -8,20 +8,30 @@
 </head>
 <body class="admin-body">
     <main class="admin-login">
-        <a href="{{ url_for('home') }}" class="admin-voltar">Voltar para a loja</a>
-        <h1><span class="brand-mark">♛</span> Kurt Griffes</h1>
-        <p>Acesso administrativo</p>
+        <div class="admin-login-topo">
+            <a href="{{ url_for('home') }}" class="admin-voltar">Voltar para a loja</a>
+            <span class="admin-login-status"><span></span> Ambiente protegido</span>
+        </div>
+        <div class="admin-login-marca">
+            <div class="admin-coroa-moldura">
+                <img src="{{ url_for('static', filename='imagens/icons/coroa-elegante.svg') }}" alt="Coroa Kurt Griffes">
+            </div>
+            <p class="admin-login-kicker">KURT GRIFFES / ADMIN</p>
+        </div>
+        <h1>Acesso administrativo</h1>
+        <p class="admin-login-descricao">Entre para gerenciar o catálogo da sua loja.</p>
         {% with mensagens = get_flashed_messages(with_categories=true) %}
             {% for categoria, mensagem in mensagens %}<div class="flash {{ categoria }}">{{ mensagem }}</div>{% endfor %}
         {% endwith %}
         <form method="post" class="admin-form">
-            <label for="senha">Senha</label>
+            <label for="senha">Senha de acesso</label>
             <div class="campo-senha">
                 <input id="senha" name="senha" type="password" required autofocus autocomplete="current-password">
-                <button type="button" class="botao-ver-senha" onclick="alternarSenha()" aria-label="Mostrar senha">Mostrar</button>
+                <button type="button" class="botao-ver-senha" onclick="alternarSenha()" aria-label="Mostrar senha" aria-pressed="false">Mostrar</button>
             </div>
-            <button type="submit" class="btn-comprar">Entrar</button>
+            <button type="submit" class="btn-comprar admin-login-submit"><span>Entrar no painel</span><strong>&rarr;</strong></button>
         </form>
+        <p class="admin-login-rodape">Acesso exclusivo para administradores autorizados.</p>
     </main>
     <script>
         function alternarSenha() {
@@ -31,6 +41,7 @@
             campo.type = senhaVisivel ? 'password' : 'text';
             botao.textContent = senhaVisivel ? 'Mostrar' : 'Ocultar';
             botao.setAttribute('aria-label', senhaVisivel ? 'Mostrar senha' : 'Ocultar senha');
+            botao.setAttribute('aria-pressed', String(!senhaVisivel));
         }
     </script>
 </body>

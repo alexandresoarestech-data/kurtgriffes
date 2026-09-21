@@ -511,6 +511,19 @@
         </div>
     </div>
 
+    <div id="modal-limpar-carrinho" class="modal-overlay" aria-hidden="true">
+        <div class="modal-confirmacao-carrinho" role="dialog" aria-modal="true" aria-labelledby="limpar-carrinho-titulo">
+            <div class="confirmacao-icone">!</div>
+            <p class="confirmacao-kicker">ATENÇÃO</p>
+            <h3 id="limpar-carrinho-titulo">Esvaziar carrinho?</h3>
+            <p class="confirmacao-texto">Todos os produtos e escolhas serão removidos do seu carrinho.</p>
+            <div class="confirmacao-acoes">
+                <button type="button" class="btn-confirmacao-cancelar" onclick="fecharConfirmacaoCarrinho()">Cancelar</button>
+                <button type="button" class="btn-confirmacao-remover" onclick="confirmarEsvaziamentoCarrinho()">Esvaziar carrinho</button>
+            </div>
+        </div>
+    </div>
+
     <!-- SCRIPTS -->
     <script>
         const indicesAtuais = {};
@@ -832,11 +845,23 @@
 
         function esvaziarCarrinho() {
             if (carrinhoItens.length === 0) return;
-            if (!confirm('Deseja remover todos os produtos do carrinho?')) return;
+            const modal = document.getElementById('modal-limpar-carrinho');
+            modal.style.display = 'flex';
+            modal.setAttribute('aria-hidden', 'false');
+        }
+
+        function fecharConfirmacaoCarrinho() {
+            const modal = document.getElementById('modal-limpar-carrinho');
+            modal.style.display = 'none';
+            modal.setAttribute('aria-hidden', 'true');
+        }
+
+        function confirmarEsvaziamentoCarrinho() {
             carrinhoItens = [];
             atualizarCarrinhoUI();
             atualizarContadorTopo();
             salvarCarrinho();
+            fecharConfirmacaoCarrinho();
         }
 
         function irParaCheckoutWhatsApp() {
