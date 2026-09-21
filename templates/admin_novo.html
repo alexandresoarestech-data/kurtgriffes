@@ -20,10 +20,47 @@
             <label for="nome">Nome do produto</label><input id="nome" name="nome" value="{{ produto.nome if produto else '' }}" required>
             <div class="admin-grid-2"><div><label for="categoria">Categoria</label><select id="categoria" name="categoria">{% for chave, dados in categorias.items() %}<option value="{{ chave }}" {% if produto and produto.categoria == chave %}selected{% endif %}>{{ dados[0] }}</option>{% endfor %}</select></div><div><label for="preco">Preço</label><input id="preco" name="preco" inputmode="decimal" placeholder="149,90" value="{{ '%.2f'|format(produto.preco) if produto else '' }}" required></div></div>
             <div class="admin-grid-2"><div><label for="cores">Cores <small>separadas por vírgula</small></label><input id="cores" name="cores" placeholder="Preto, Branco" value="{{ produto.cores if produto else '' }}"></div><div><label for="estoque">Estoque</label><input id="estoque" name="estoque" type="number" min="0" value="{{ produto.estoque if produto else 0 }}" required></div></div>
+            {% if modo_edicao and produto %}
+            <div class="admin-fotos-bloco">
+                <div class="admin-fotos-cabecalho">
+                    <div><label>Fotos do anúncio</label><small>Desmarque uma foto para removê-la. A primeira foto será a capa.</small></div>
+                    <span id="contador-fotos-edicao" class="admin-fotos-contador"></span>
+                </div>
+                {% set fotos_produto = produto.imagens.split('|') if produto.imagens else [] %}
+                {% if fotos_produto %}
+                <div class="admin-fotos-grid">
+                    {% for imagem in fotos_produto %}
+                    <label class="admin-foto-item" data-foto-item>
+                        <input type="checkbox" name="imagens_mantidas" value="{{ imagem }}" checked>
+                        <span class="admin-foto-selecao">Manter</span>
+                        <img src="{{ url_for('static', filename=imagem) }}" alt="Foto {{ loop.index }} do produto">
+                        <span class="admin-foto-legenda">Foto {{ loop.index }}{% if loop.first %} · Capa{% endif %}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="fotos-existentes">Este produto ainda não possui fotos cadastradas.</p>
+                {% endif %}
+            </div>
+            {% endif %}
             <label for="fotos">Fotos <small>JPG, PNG ou WebP. Serão comprimidas automaticamente.</small></label><input id="fotos" name="fotos" type="file" accept="image/jpeg,image/png,image/webp" multiple>
-            {% if modo_edicao and produto and produto.imagens %}<p class="fotos-existentes">Este produto já possui {{ produto.imagens.split('|')|length }} foto(s). Novos arquivos serão adicionados.</p>{% endif %}
+            {% if modo_edicao %}<p class="fotos-existentes">Novas fotos serão adicionadas às que estiverem marcadas acima.</p>{% endif %}
             <button type="submit" class="btn-comprar">{{ 'Salvar alterações' if modo_edicao else 'Publicar produto' }}</button>
         </form>
     </main>
+    {% if modo_edicao %}
+    <script>
+        const fotosEdicao = document.querySelectorAll('[data-foto-item] input');
+        const contadorFotosEdicao = document.getElementById('contador-fotos-edicao');
+
+        function atualizarContadorFotos() {
+            const selecionadas = Array.from(fotosEdicao).filter((foto) => foto.checked).length;
+            contadorFotosEdicao.textContent = `${selecionadas} ${selecionadas === 1 ? 'foto mantida' : 'fotos mantidas'}`;
+        }
+
+        fotosEdicao.forEach((foto) => foto.addEventListener('change', atualizarContadorFotos));
+        atualizarContadorFotos();
+    </script>
+    {% endif %}
 </body>
 </html>

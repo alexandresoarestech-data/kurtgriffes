@@ -297,7 +297,20 @@ def admin_editar_produto(produto_id):
             flash("Informe o nome do produto.", "erro")
             return render_template("admin_novo.html", categorias=CATEGORIAS, produto=produto, modo_edicao=True)
 
-        imagens = [imagem for imagem in (produto["imagens"] or "").split("|") if imagem]
+        imagens_atuais = [imagem for imagem in (produto["imagens"] or "").split("|") if imagem]
+        imagens_mantidas = [imagem for imagem in request.form.getlist("imagens_mantidas") if imagem in imagens_atuais]
+        imagens_removidas = set(imagens_atuais) - set(imagens_mantidas)
+        imagens = list(imagens_mantidas)
+
+        for caminho_relativo in imagens_removidas:
+            caminho = (BASE_DIR / "static" / caminho_relativo).resolve()
+            static_dir = (BASE_DIR / "static").resolve()
+            if static_dir in caminho.parents and caminho.is_file():
+                try:
+                    caminho.unlink()
+                except OSError as erro:
+                    app.logger.warning("Não foi possível remover a imagem %s: %s", caminho, erro)
+
         pasta = UPLOAD_DIR / f"admin-produto-{produto_id}"
         pasta.mkdir(parents=True, exist_ok=True)
         for arquivo in request.files.getlist("fotos"):

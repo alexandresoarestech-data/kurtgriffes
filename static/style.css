@@ -1570,6 +1570,23 @@ a {
 .btn-editar:hover { background: rgba(212, 175, 55, .18); }
 .btn-excluir { background: none; border: 1px solid #7f1d1d; color: #fca5a5; }
 .fotos-existentes { padding: 10px 12px; border-left: 3px solid var(--cor-gold); background: rgba(212, 175, 55, .08); color: #c7c7cc; font-size: 13px; }
+.admin-fotos-bloco { display: grid; gap: 14px; padding: 18px; border: 1px solid #29292d; border-radius: 10px; background: rgba(17, 17, 19, .72); }
+.admin-fotos-cabecalho { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.admin-fotos-cabecalho label { margin-bottom: 3px; }
+.admin-fotos-cabecalho small { display: block; color: #8f8f98; font-size: 12px; }
+.admin-fotos-contador { color: var(--cor-gold); font-size: 12px; font-weight: 700; white-space: nowrap; }
+.admin-fotos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
+.admin-foto-item { position: relative; display: block; min-width: 0; overflow: hidden; border: 1px solid #3a3a40; border-radius: 8px; background: #0b0b0d; cursor: pointer; transition: border-color .2s ease, opacity .2s ease, transform .2s ease; }
+.admin-foto-item:hover { border-color: rgba(212, 175, 55, .72); transform: translateY(-2px); }
+.admin-foto-item input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.admin-foto-item img { display: block; width: 100%; aspect-ratio: 1 / 1.15; object-fit: cover; }
+.admin-foto-selecao { position: absolute; z-index: 1; top: 8px; right: 8px; padding: 4px 7px; border-radius: 4px; background: var(--cor-gold); color: #080808; font-size: 10px; font-weight: 800; }
+.admin-foto-legenda { display: block; padding: 8px 9px; color: #c7c7cc; font-size: 11px; }
+.admin-foto-item:not(:has(input:checked)) { opacity: .48; border-color: #632b2b; }
+.admin-foto-item:not(:has(input:checked)) .admin-foto-selecao { background: #7f1d1d; color: #fecaca; }
+.admin-foto-item:not(:has(input:checked)) .admin-foto-selecao::after { content: 'Remover'; }
+.admin-foto-item:not(:has(input:checked)) .admin-foto-selecao { font-size: 0; }
+.admin-foto-item:not(:has(input:checked)) .admin-foto-selecao::after { font-size: 10px; }
 .modal-aberto { overflow: hidden; }
 .modal-admin-overlay { display: flex; visibility: hidden; opacity: 0; position: fixed; inset: 0; z-index: 4000; align-items: center; justify-content: center; padding: 20px; background: rgba(0, 0, 0, .82); transition: opacity .2s ease, visibility .2s ease; }
 .modal-admin-overlay.ativo { visibility: visible; opacity: 1; }
