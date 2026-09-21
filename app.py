@@ -19,7 +19,7 @@ from flask import Flask, flash, redirect, render_template, request, session, url
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 
-from drive_storage import enviar_imagem, ids_de_json, ids_para_json, remover_imagem
+from drive_storage import autorizar_drive, enviar_imagem, ids_de_json, ids_para_json, obter_pasta_produto, remover_imagem
 
 try:
     from PIL import Image
@@ -101,6 +101,17 @@ def conectar_banco():
 
 def inicializar_banco():
     with conectar_banco() as banco:
+        banco.execute(
+            """CREATE TABLE IF NOT EXISTS categorias (
+                chave TEXT PRIMARY KEY,
+                titulo TEXT NOT NULL,
+                subtitulo TEXT NOT NULL DEFAULT ''
+            )"""
+        )
+        for chave, (titulo, subtitulo) in CATEGORIAS.items():
+            existente = banco.execute("SELECT chave FROM categorias WHERE chave = ?", (chave,)).fetchone()
+            if not existente:
+                banco.execute("INSERT INTO categorias (chave, titulo, subtitulo) VALUES (?, ?, ?)", (chave, titulo, subtitulo))
         tipo_id = "BIGSERIAL PRIMARY KEY" if DATABASE_URL else "INTEGER PRIMARY KEY AUTOINCREMENT"
         banco.execute(
             f"""CREATE TABLE IF NOT EXISTS produtos (
@@ -126,6 +137,8 @@ def inicializar_banco():
             banco.execute("ALTER TABLE produtos ADD COLUMN hora_criacao TEXT")
         if "drive_imagens" not in colunas:
             banco.execute("ALTER TABLE produtos ADD COLUMN drive_imagens TEXT DEFAULT '[]'")
+        if "drive_pasta_id" not in colunas:
+            banco.execute("ALTER TABLE produtos ADD COLUMN drive_pasta_id TEXT DEFAULT ''")
 
         valores_data = "CURRENT_DATE::text, CURRENT_TIME::text" if DATABASE_URL else "CURRENT_DATE, CURRENT_TIME"
         banco.execute(
@@ -184,6 +197,12 @@ def listar_imagens_pasta(nome_pasta):
     ]
 
 
+def obter_categorias():
+    with conectar_banco() as banco:
+        linhas = banco.execute("SELECT chave, titulo, subtitulo FROM categorias ORDER BY titulo").fetchall()
+    return {linha["chave"]: (linha["titulo"], linha["subtitulo"]) for linha in linhas}
+
+
 def enviar_imagem_para_drive(caminho, categoria, nome_produto):
     return enviar_imagem(
         caminho,
@@ -197,6 +216,27 @@ def enviar_imagem_para_drive(caminho, categoria, nome_produto):
 
 def remover_imagem_do_drive(file_id):
     remover_imagem(file_id, app.config["GOOGLE_DRIVE_CLIENT_SECRET"], app.config["GOOGLE_DRIVE_TOKEN"])
+
+
+def autorizar_google_drive():
+    autorizar_drive(app.config["GOOGLE_DRIVE_CLIENT_SECRET"], app.config["GOOGLE_DRIVE_TOKEN"])
+
+
+def link_pasta_drive(categoria, nome_produto, pasta_id=""):
+    if not app.config["GOOGLE_DRIVE_TOKEN"] or not Path(app.config["GOOGLE_DRIVE_TOKEN"]).is_file():
+        return ""
+    if not pasta_id:
+        try:
+            pasta_id = obter_pasta_produto(
+                obter_categorias().get(categoria, (categoria, ""))[0],
+                nome_produto,
+                app.config["GOOGLE_DRIVE_CLIENT_SECRET"],
+                app.config["GOOGLE_DRIVE_TOKEN"],
+                app.config["GOOGLE_DRIVE_ROOT_FOLDER_ID"],
+            )
+        except Exception:
+            app.logger.exception("Não foi possível localizar a pasta do produto no Drive")
+    return f"https://drive.google.com/drive/folders/{pasta_id}" if pasta_id else ""
 
 
 def drive_esta_configurado():
@@ -227,9 +267,10 @@ def migrar_planilha(banco):
 
 
 def normalizar_categoria(categoria):
+    categorias = obter_categorias()
     texto = str(categoria or "").strip().lower()
     aliases = {"calças": "calca", "calca": "calca", "polos": "polo", "camisas": "camisa", "calçados": "calcado", "calcados": "calcado"}
-    return aliases.get(texto, texto if texto in CATEGORIAS else "camisa")
+    return aliases.get(texto, texto if texto in categorias else "camisa")
 
 
 def produto_para_template(produto):
@@ -259,8 +300,9 @@ def admin_obrigatorio():
 @app.route("/")
 def home():
     produtos = obter_produtos()
+    categorias_disponiveis = obter_categorias()
     categorias = {}
-    for chave, (titulo, subtitulo) in CATEGORIAS.items():
+    for chave, (titulo, subtitulo) in categorias_disponiveis.items():
         itens = [produto for produto in produtos if produto["categoria"] == chave]
         if itens:
             categorias[chave] = {"titulo": titulo, "subtitulo": subtitulo, "itens": itens}
@@ -297,7 +339,44 @@ def admin_produtos():
         "estoque_baixo": sum(produto["estoque"] < 3 for produto in produtos),
         "categorias": len({produto["categoria"] for produto in produtos}),
     }
-    return render_template("admin_produtos.html", produtos=produtos, categorias=CATEGORIAS, resumo=resumo)
+    drive_conectado = bool(app.config["GOOGLE_DRIVE_TOKEN"] and Path(app.config["GOOGLE_DRIVE_TOKEN"]).is_file())
+    return render_template("admin_produtos.html", produtos=produtos, categorias=obter_categorias(), resumo=resumo, drive_conectado=drive_conectado)
+
+
+@app.post("/admin/categorias/nova")
+def admin_nova_categoria():
+    bloqueio = admin_obrigatorio()
+    if bloqueio:
+        return bloqueio
+    titulo = request.form.get("titulo", "").strip()
+    subtitulo = request.form.get("subtitulo", "").strip() or "Confira esta seleção"
+    chave = secure_filename(titulo.lower().replace(" ", "-"))
+    if not titulo or not chave:
+        flash("Informe um nome válido para a categoria.", "erro")
+        return redirect(url_for("admin_produtos"))
+    with conectar_banco() as banco:
+        existe = banco.execute("SELECT chave FROM categorias WHERE chave = ?", (chave,)).fetchone()
+        if existe:
+            flash("Essa categoria já existe.", "erro")
+            return redirect(url_for("admin_produtos"))
+        banco.execute("INSERT INTO categorias (chave, titulo, subtitulo) VALUES (?, ?, ?)", (chave, titulo, subtitulo))
+        banco.commit()
+    flash("Categoria criada com sucesso.", "sucesso")
+    return redirect(url_for("admin_produtos"))
+
+
+@app.get("/admin/drive/conectar")
+def admin_conectar_drive():
+    bloqueio = admin_obrigatorio()
+    if bloqueio:
+        return bloqueio
+    try:
+        autorizar_google_drive()
+        flash("Google Drive conectado com sucesso.", "sucesso")
+    except Exception as erro:
+        app.logger.exception("Falha na autorização do Google Drive")
+        flash(f"Não foi possível conectar o Google Drive: {erro}", "erro")
+    return redirect(url_for("admin_produtos"))
 
 
 @app.route("/admin/produtos/novo", methods=["GET", "POST"])
@@ -314,10 +393,10 @@ def admin_novo_produto():
             estoque = max(0, int(request.form.get("estoque", 0) or 0))
         except (TypeError, ValueError):
             flash("O estoque deve ser um número inteiro maior ou igual a zero.", "erro")
-            return render_template("admin_novo.html", categorias=CATEGORIAS)
+            return render_template("admin_novo.html", categorias=obter_categorias())
         if not nome:
             flash("Informe o nome do produto.", "erro")
-            return render_template("admin_novo.html", categorias=CATEGORIAS)
+            return render_template("admin_novo.html", categorias=obter_categorias())
 
         slug = secure_filename(nome.lower().replace(" ", "-")) or "produto"
         pasta = UPLOAD_DIR / f"admin-{slug}-{os.urandom(3).hex()}"
@@ -341,21 +420,33 @@ def admin_novo_produto():
                 flash("Uma das imagens não pôde ser processada.", "erro")
 
         drive_ids = []
+        drive_pasta_id = ""
         for imagem in imagens:
             file_id = enviar_imagem_para_drive(BASE_DIR / "static" / imagem, categoria, nome)
             drive_ids.append(file_id)
+        if imagens and drive_esta_configurado() and any(drive_ids):
+            try:
+                drive_pasta_id = obter_pasta_produto(
+                    obter_categorias().get(categoria, (categoria, ""))[0],
+                    nome,
+                    app.config["GOOGLE_DRIVE_CLIENT_SECRET"],
+                    app.config["GOOGLE_DRIVE_TOKEN"],
+                    app.config["GOOGLE_DRIVE_ROOT_FOLDER_ID"],
+                )
+            except Exception:
+                app.logger.exception("Não foi possível guardar a pasta do produto no Drive")
         if drive_esta_configurado() and imagens and not any(drive_ids):
             flash("Produto salvo localmente, mas não foi possível enviar as fotos ao Google Drive.", "erro")
 
         with conectar_banco() as banco:
             banco.execute(
-                "INSERT INTO produtos (nome, categoria, preco, cores, estoque, imagens, drive_imagens, data_criacao, hora_criacao) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_DATE, CURRENT_TIME)",
-                (nome, categoria, preco, cores, estoque, "|".join(imagens), ids_para_json(drive_ids)),
+                "INSERT INTO produtos (nome, categoria, preco, cores, estoque, imagens, drive_imagens, drive_pasta_id, data_criacao, hora_criacao) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_DATE, CURRENT_TIME)",
+                (nome, categoria, preco, cores, estoque, "|".join(imagens), ids_para_json(drive_ids), drive_pasta_id),
             )
             banco.commit()
         flash("Produto criado com sucesso.", "sucesso")
         return redirect(url_for("admin_produtos"))
-    return render_template("admin_novo.html", categorias=CATEGORIAS, produto=None, modo_edicao=False)
+    return render_template("admin_novo.html", categorias=obter_categorias(), produto=None, modo_edicao=False)
 
 
 @app.route("/admin/produtos/<int:produto_id>/editar", methods=["GET", "POST"])
@@ -378,10 +469,10 @@ def admin_editar_produto(produto_id):
             estoque = max(0, int(request.form.get("estoque", 0) or 0))
         except (TypeError, ValueError):
             flash("O estoque deve ser um número inteiro maior ou igual a zero.", "erro")
-            return render_template("admin_novo.html", categorias=CATEGORIAS, produto=produto, modo_edicao=True)
+            return render_template("admin_novo.html", categorias=obter_categorias(), produto=produto, modo_edicao=True)
         if not nome:
             flash("Informe o nome do produto.", "erro")
-            return render_template("admin_novo.html", categorias=CATEGORIAS, produto=produto, modo_edicao=True)
+            return render_template("admin_novo.html", categorias=obter_categorias(), produto=produto, modo_edicao=True)
 
         imagens_atuais = [imagem for imagem in (produto["imagens"] or "").split("|") if imagem]
         drive_ids_atuais = ids_de_json(produto["drive_imagens"], len(imagens_atuais))
@@ -389,6 +480,7 @@ def admin_editar_produto(produto_id):
         imagens_removidas = set(imagens_atuais) - set(imagens_mantidas)
         imagens = list(imagens_mantidas)
         drive_ids = [drive_ids_atuais[imagens_atuais.index(imagem)] for imagem in imagens_mantidas]
+        drive_pasta_id = produto["drive_pasta_id"] or ""
 
         for caminho_relativo in imagens_removidas:
             indice = imagens_atuais.index(caminho_relativo)
@@ -427,14 +519,17 @@ def admin_editar_produto(produto_id):
 
         with conectar_banco() as banco:
             banco.execute(
-                "UPDATE produtos SET nome = ?, categoria = ?, preco = ?, cores = ?, estoque = ?, imagens = ?, drive_imagens = ?, data_criacao = COALESCE(data_criacao, CURRENT_DATE), hora_criacao = COALESCE(hora_criacao, CURRENT_TIME) WHERE id = ?",
-                (nome, categoria, preco, cores, estoque, "|".join(imagens), ids_para_json(drive_ids), produto_id),
+                "UPDATE produtos SET nome = ?, categoria = ?, preco = ?, cores = ?, estoque = ?, imagens = ?, drive_imagens = ?, drive_pasta_id = ?, data_criacao = COALESCE(data_criacao, CURRENT_DATE), hora_criacao = COALESCE(hora_criacao, CURRENT_TIME) WHERE id = ?",
+                (nome, categoria, preco, cores, estoque, "|".join(imagens), ids_para_json(drive_ids), drive_pasta_id, produto_id),
             )
             banco.commit()
         flash("Produto atualizado com sucesso.", "sucesso")
         return redirect(url_for("admin_produtos"))
 
-    return render_template("admin_novo.html", categorias=CATEGORIAS, produto=produto, modo_edicao=True)
+    if produto:
+        produto = dict(produto)
+        produto["drive_link"] = link_pasta_drive(produto["categoria"], produto["nome"], produto.get("drive_pasta_id", ""))
+    return render_template("admin_novo.html", categorias=obter_categorias(), produto=produto, modo_edicao=True)
 
 
 @app.post("/admin/produtos/<int:produto_id>/excluir")

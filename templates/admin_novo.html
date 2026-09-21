@@ -21,6 +21,10 @@
             <div class="admin-grid-2"><div><label for="categoria">Categoria</label><select id="categoria" name="categoria">{% for chave, dados in categorias.items() %}<option value="{{ chave }}" {% if produto and produto.categoria == chave %}selected{% endif %}>{{ dados[0] }}</option>{% endfor %}</select></div><div><label for="preco">Preço</label><input id="preco" name="preco" inputmode="decimal" placeholder="149,90" value="{{ '%.2f'|format(produto.preco) if produto else '' }}" required></div></div>
             <div class="admin-grid-2"><div><label for="cores">Cores <small>separadas por vírgula</small></label><input id="cores" name="cores" placeholder="Preto, Branco" value="{{ produto.cores if produto else '' }}"></div><div><label for="estoque">Estoque</label><input id="estoque" name="estoque" type="number" min="0" value="{{ produto.estoque if produto else 0 }}" required></div></div>
             {% if modo_edicao and produto %}
+            <div class="admin-drive-pasta">
+                <div><strong>Pasta deste produto no Google Drive</strong><small>As fotos ficam organizadas dentro da categoria e do produto.</small></div>
+                {% if produto.drive_link %}<a href="{{ produto.drive_link }}" target="_blank" rel="noopener">Abrir pasta no Drive &rarr;</a>{% else %}<span>Conecte o Google Drive no painel para criar o caminho.</span>{% endif %}
+            </div>
             <div class="admin-fotos-bloco">
                 <div class="admin-fotos-cabecalho">
                     <div><label>Fotos do anúncio</label><small>Desmarque uma foto para removê-la. A primeira foto será a capa.</small></div>

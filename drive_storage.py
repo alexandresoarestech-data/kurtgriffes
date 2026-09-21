@@ -55,6 +55,12 @@ def _servico_drive(caminho_client_secret, caminho_token):
     return _service
 
 
+def autorizar_drive(caminho_client_secret, caminho_token):
+    if not caminho_client_secret or not Path(caminho_client_secret).is_file():
+        raise FileNotFoundError("Credencial OAuth do Google Drive não encontrada.")
+    _servico_drive(caminho_client_secret, caminho_token)
+
+
 def _escapar_nome(nome):
     return str(nome).replace("'", "\\'")
 
@@ -78,13 +84,20 @@ def _obter_ou_criar_pasta(servico, nome, pasta_pai_id):
     return pasta["id"]
 
 
+def obter_pasta_produto(categoria, produto, caminho_client_secret, caminho_token, pasta_raiz_id):
+    if not drive_configurado(caminho_client_secret, caminho_token, pasta_raiz_id):
+        return ""
+    servico = _servico_drive(caminho_client_secret, caminho_token)
+    pasta_categoria = _obter_ou_criar_pasta(servico, categoria, pasta_raiz_id)
+    return _obter_ou_criar_pasta(servico, produto, pasta_categoria)
+
+
 def enviar_imagem(caminho, categoria, produto, caminho_client_secret, caminho_token, pasta_raiz_id):
     if not drive_configurado(caminho_client_secret, caminho_token, pasta_raiz_id):
         return ""
     try:
         servico = _servico_drive(caminho_client_secret, caminho_token)
-        pasta_categoria = _obter_ou_criar_pasta(servico, categoria, pasta_raiz_id)
-        pasta_produto = _obter_ou_criar_pasta(servico, produto, pasta_categoria)
+        pasta_produto = obter_pasta_produto(categoria, produto, caminho_client_secret, caminho_token, pasta_raiz_id)
         metadados = {"name": Path(caminho).name, "parents": [pasta_produto]}
         midia = MediaFileUpload(str(caminho), resumable=True)
         arquivo = servico.files().create(body=metadados, media_body=midia, fields="id").execute()
