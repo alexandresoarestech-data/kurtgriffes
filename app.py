@@ -6,6 +6,22 @@ import sqlite3
 from io import StringIO
 from pathlib import Path
 
+try:
+    import psycopg
+except ImportError:
+    psycopg = None
+
+
+class RowCompat(dict):
+    def __getitem__(self, chave):
+        if isinstance(chave, int):
+            return list(self.values())[chave]
+        return super().__getitem__(chave)
+
+
+def postgres_row(cursor, valores):
+    return RowCompat(zip((coluna.name for coluna in cursor.description), valores))
+
 import requests
 from flask import Flask, flash, redirect, render_template, request, session, url_for
 from dotenv import load_dotenv
@@ -46,20 +62,57 @@ app.config["SESSION_COOKIE_SECURE"] = os.environ.get("COOKIE_SECURE", "0") == "1
 app.config["GOOGLE_DRIVE_CLIENT_SECRET"] = os.environ.get("GOOGLE_DRIVE_CLIENT_SECRET", "")
 app.config["GOOGLE_DRIVE_TOKEN"] = os.environ.get("GOOGLE_DRIVE_TOKEN", "")
 app.config["GOOGLE_DRIVE_ROOT_FOLDER_ID"] = os.environ.get("GOOGLE_DRIVE_ROOT_FOLDER_ID", "")
+DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
+
+
+class ConexaoCompat:
+    def __init__(self, conexao, postgres=False):
+        self._conexao = conexao
+        self._postgres = postgres
+
+    def _sql(self, consulta):
+        return consulta.replace("?", "%s") if self._postgres else consulta
+
+    def execute(self, consulta, parametros=()):
+        return self._conexao.execute(self._sql(consulta), parametros)
+
+    def executemany(self, consulta, parametros):
+        return self._conexao.executemany(self._sql(consulta), parametros)
+
+    def commit(self):
+        return self._conexao.commit()
+
+    def rollback(self):
+        return self._conexao.rollback()
+
+    def close(self):
+        return self._conexao.close()
+
+    def __enter__(self):
+        self._conexao.__enter__()
+        return self
+
+    def __exit__(self, tipo, valor, traceback):
+        return self._conexao.__exit__(tipo, valor, traceback)
 
 
 def conectar_banco():
+    if DATABASE_URL:
+        if psycopg is None:
+            raise RuntimeError("Instale psycopg[binary] para usar DATABASE_URL.")
+        return ConexaoCompat(psycopg.connect(DATABASE_URL, row_factory=postgres_row), postgres=True)
     conexao = sqlite3.connect(DATABASE, timeout=30)
     conexao.execute("PRAGMA busy_timeout = 30000")
     conexao.row_factory = sqlite3.Row
-    return conexao
+    return ConexaoCompat(conexao)
 
 
 def inicializar_banco():
     with conectar_banco() as banco:
+        tipo_id = "BIGSERIAL PRIMARY KEY" if DATABASE_URL else "INTEGER PRIMARY KEY AUTOINCREMENT"
         banco.execute(
-            """CREATE TABLE IF NOT EXISTS produtos (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+            f"""CREATE TABLE IF NOT EXISTS produtos (
+                id {tipo_id},
                 nome TEXT NOT NULL,
                 categoria TEXT NOT NULL,
                 preco REAL NOT NULL DEFAULT 0,
@@ -71,7 +124,10 @@ def inicializar_banco():
             )"""
         )
 
-        colunas = {linha[1] for linha in banco.execute("PRAGMA table_info(produtos)").fetchall()}
+        if DATABASE_URL:
+            colunas = {linha["column_name"] for linha in banco.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'produtos'").fetchall()}
+        else:
+            colunas = {linha[1] for linha in banco.execute("PRAGMA table_info(produtos)").fetchall()}
         if "data_criacao" not in colunas:
             banco.execute("ALTER TABLE produtos ADD COLUMN data_criacao TEXT")
         if "hora_criacao" not in colunas:
@@ -81,8 +137,8 @@ def inicializar_banco():
 
         banco.execute(
             """UPDATE produtos
-               SET data_criacao = COALESCE(data_criacao, date(criado_em)),
-                   hora_criacao = COALESCE(hora_criacao, time(criado_em))
+               SET data_criacao = COALESCE(data_criacao, CURRENT_DATE),
+                   hora_criacao = COALESCE(hora_criacao, CURRENT_TIME)
                WHERE data_criacao IS NULL OR hora_criacao IS NULL"""
         )
 
@@ -103,7 +159,7 @@ def migrar_banco_antigo(banco):
         produtos = antigo.execute("SELECT nome, categoria, preco, cores, estoque, imagens, ativo FROM produtos").fetchall()
         antigo.close()
         banco.executemany(
-            "INSERT INTO produtos (nome, categoria, preco, cores, estoque, imagens, ativo, data_criacao, hora_criacao) VALUES (?, ?, ?, ?, ?, ?, ?, date('now'), time('now'))",
+            "INSERT INTO produtos (nome, categoria, preco, cores, estoque, imagens, ativo, data_criacao, hora_criacao) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_DATE, CURRENT_TIME)",
             [tuple(produto) for produto in produtos],
         )
         banco.commit()
@@ -169,7 +225,7 @@ def migrar_planilha(banco):
             imagens = listar_imagens_pasta(pasta)
             categoria = normalizar_categoria(linha.get("categoria", ""))
             banco.execute(
-                "INSERT INTO produtos (nome, categoria, preco, cores, estoque, imagens, data_criacao, hora_criacao) VALUES (?, ?, ?, ?, ?, ?, date('now'), time('now'))",
+                "INSERT INTO produtos (nome, categoria, preco, cores, estoque, imagens, data_criacao, hora_criacao) VALUES (?, ?, ?, ?, ?, ?, CURRENT_DATE, CURRENT_TIME)",
                 (linha.get("nome", "Produto"), categoria, converter_preco(linha.get("preco")), linha.get("cor", ""), 10, "|".join(imagens)),
             )
         banco.commit()
@@ -300,7 +356,7 @@ def admin_novo_produto():
 
         with conectar_banco() as banco:
             banco.execute(
-                "INSERT INTO produtos (nome, categoria, preco, cores, estoque, imagens, drive_imagens, data_criacao, hora_criacao) VALUES (?, ?, ?, ?, ?, ?, ?, date('now'), time('now'))",
+                "INSERT INTO produtos (nome, categoria, preco, cores, estoque, imagens, drive_imagens, data_criacao, hora_criacao) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_DATE, CURRENT_TIME)",
                 (nome, categoria, preco, cores, estoque, "|".join(imagens), ids_para_json(drive_ids)),
             )
             banco.commit()
@@ -378,7 +434,7 @@ def admin_editar_produto(produto_id):
 
         with conectar_banco() as banco:
             banco.execute(
-                "UPDATE produtos SET nome = ?, categoria = ?, preco = ?, cores = ?, estoque = ?, imagens = ?, drive_imagens = ?, data_criacao = COALESCE(data_criacao, date('now')), hora_criacao = COALESCE(hora_criacao, time('now')) WHERE id = ?",
+                "UPDATE produtos SET nome = ?, categoria = ?, preco = ?, cores = ?, estoque = ?, imagens = ?, drive_imagens = ?, data_criacao = COALESCE(data_criacao, CURRENT_DATE), hora_criacao = COALESCE(hora_criacao, CURRENT_TIME) WHERE id = ?",
                 (nome, categoria, preco, cores, estoque, "|".join(imagens), ids_para_json(drive_ids), produto_id),
             )
             banco.commit()
