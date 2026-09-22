@@ -1,5 +1,6 @@
 import csv
 import hmac
+import json
 import os
 import secrets
 import sqlite3
@@ -15,7 +16,7 @@ except ImportError:
 
 
 import requests
-from flask import Flask, flash, redirect, render_template, request, session, url_for
+from flask import Flask, Response, flash, jsonify, redirect, render_template, request, session, url_for
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 
@@ -123,6 +124,33 @@ def inicializar_banco():
                 estoque INTEGER NOT NULL DEFAULT 0,
                 imagens TEXT DEFAULT '',
                 ativo INTEGER NOT NULL DEFAULT 1,
+                criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )"""
+        )
+        cliente_id = "BIGSERIAL PRIMARY KEY" if DATABASE_URL else "INTEGER PRIMARY KEY AUTOINCREMENT"
+        banco.execute(
+            f"""CREATE TABLE IF NOT EXISTS clientes (
+                id {cliente_id},
+                nome TEXT NOT NULL,
+                telefone TEXT NOT NULL UNIQUE,
+                email TEXT DEFAULT '',
+                aceita_marketing INTEGER NOT NULL DEFAULT 0,
+                criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )"""
+        )
+        pedido_id = "BIGSERIAL PRIMARY KEY" if DATABASE_URL else "INTEGER PRIMARY KEY AUTOINCREMENT"
+        banco.execute(
+            f"""CREATE TABLE IF NOT EXISTS pedidos (
+                id {pedido_id},
+                numero TEXT NOT NULL UNIQUE,
+                cliente_id INTEGER NOT NULL,
+                itens TEXT NOT NULL,
+                subtotal REAL NOT NULL DEFAULT 0,
+                total REAL NOT NULL DEFAULT 0,
+                tipo_entrega TEXT NOT NULL,
+                endereco TEXT DEFAULT '',
+                pagamento TEXT DEFAULT '',
                 criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )"""
         )
@@ -309,6 +337,55 @@ def home():
     return render_template("index.html", novidades={"titulo": "Novidades", "subtitulo": "Chegou agora na loja", "itens": produtos}, categorias=categorias)
 
 
+@app.post("/api/pedidos")
+def registrar_pedido():
+    dados = request.get_json(silent=True) or {}
+    nome = str(dados.get("nome", "")).strip()
+    telefone = "".join(caractere for caractere in str(dados.get("telefone", "")) if caractere.isdigit())
+    numero = str(dados.get("numero", "")).strip()
+    itens = dados.get("itens")
+    if not nome or len(telefone) not in {10, 11} or not numero or not isinstance(itens, list) or not itens:
+        return jsonify({"erro": "Dados do pedido incompletos."}), 400
+
+    aceita_marketing = bool(dados.get("aceita_marketing", False))
+    email = str(dados.get("email", "")).strip()[:160]
+    endereco = str(dados.get("endereco", "")).strip()[:1000]
+    pagamento = str(dados.get("pagamento", "")).strip()[:60]
+    tipo_entrega = str(dados.get("tipo_entrega", "")).strip()[:30]
+    subtotal = float(dados.get("subtotal", 0) or 0)
+    total = float(dados.get("total", 0) or 0)
+    itens_json = json.dumps(itens, ensure_ascii=True)
+
+    try:
+        with conectar_banco() as banco:
+            cliente = banco.execute("SELECT id, aceita_marketing FROM clientes WHERE telefone = ?", (telefone,)).fetchone()
+            if cliente:
+                banco.execute(
+                    """UPDATE clientes
+                       SET nome = ?, email = ?, aceita_marketing = ?, atualizado_em = CURRENT_TIMESTAMP
+                       WHERE telefone = ?""",
+                    (nome, email, int(bool(cliente["aceita_marketing"] or aceita_marketing)), telefone),
+                )
+                cliente_id = cliente["id"]
+            else:
+                banco.execute(
+                    "INSERT INTO clientes (nome, telefone, email, aceita_marketing) VALUES (?, ?, ?, ?)",
+                    (nome, telefone, email, int(aceita_marketing)),
+                )
+                cliente_id = banco.execute("SELECT id FROM clientes WHERE telefone = ?", (telefone,)).fetchone()["id"]
+            banco.execute(
+                """INSERT INTO pedidos
+                   (numero, cliente_id, itens, subtotal, total, tipo_entrega, endereco, pagamento)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                (numero, cliente_id, itens_json, subtotal, total, tipo_entrega, endereco, pagamento),
+            )
+            banco.commit()
+    except Exception:
+        app.logger.exception("Não foi possível registrar o pedido")
+        return jsonify({"erro": "Não foi possível salvar o pedido. Tente novamente."}), 500
+    return jsonify({"ok": True})
+
+
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
     if request.method == "POST":
@@ -341,6 +418,55 @@ def admin_produtos():
     }
     drive_conectado = bool(app.config["GOOGLE_DRIVE_TOKEN"] and Path(app.config["GOOGLE_DRIVE_TOKEN"]).is_file())
     return render_template("admin_produtos.html", produtos=produtos, categorias=obter_categorias(), resumo=resumo, drive_conectado=drive_conectado)
+
+
+@app.get("/admin/clientes")
+def admin_clientes():
+    bloqueio = admin_obrigatorio()
+    if bloqueio:
+        return bloqueio
+    with conectar_banco() as banco:
+        clientes = banco.execute(
+            """SELECT c.id, c.nome, c.telefone, c.email, c.aceita_marketing,
+                      c.criado_em, c.atualizado_em, COUNT(p.id) AS pedidos
+               FROM clientes c
+               LEFT JOIN pedidos p ON p.cliente_id = c.id
+               GROUP BY c.id, c.nome, c.telefone, c.email, c.aceita_marketing, c.criado_em, c.atualizado_em
+               ORDER BY c.atualizado_em DESC, c.id DESC"""
+        ).fetchall()
+    return render_template("admin_clientes.html", clientes=clientes)
+
+
+@app.get("/admin/clientes/exportar")
+def admin_exportar_clientes():
+    bloqueio = admin_obrigatorio()
+    if bloqueio:
+        return bloqueio
+    somente_marketing = request.args.get("marketing") == "1"
+    consulta = "SELECT nome, telefone, email, aceita_marketing, criado_em, atualizado_em FROM clientes"
+    if somente_marketing:
+        consulta += " WHERE aceita_marketing = 1"
+    consulta += " ORDER BY nome"
+    with conectar_banco() as banco:
+        clientes = banco.execute(consulta).fetchall()
+    arquivo = StringIO()
+    escritor = csv.writer(arquivo)
+    escritor.writerow(["Nome", "Telefone", "E-mail", "Aceita marketing", "Criado em", "Atualizado em"])
+    for cliente in clientes:
+        escritor.writerow([
+            cliente["nome"],
+            cliente["telefone"],
+            cliente["email"],
+            "Sim" if cliente["aceita_marketing"] else "Não",
+            cliente["criado_em"],
+            cliente["atualizado_em"],
+        ])
+    nome_arquivo = "clientes-marketing.csv" if somente_marketing else "clientes.csv"
+    return Response(
+        "\ufeff" + arquivo.getvalue(),
+        mimetype="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f"attachment; filename={nome_arquivo}"},
+    )
 
 
 @app.post("/admin/categorias/nova")

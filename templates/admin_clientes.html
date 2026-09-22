@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clientes | Kurt Griffes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="admin-body">
+    <main class="admin-shell">
+        <header class="admin-topo">
+            <div class="admin-topo-titulo">
+                <p class="admin-kicker">RELACIONAMENTO</p>
+                <h1><span class="brand-mark">♛</span> Clientes</h1>
+            </div>
+            <nav class="admin-topo-nav">
+                <a href="{{ url_for('admin_produtos') }}">Produtos</a>
+                <a href="{{ url_for('home') }}">Ver loja</a>
+                <a href="{{ url_for('admin_sair') }}">Sair</a>
+            </nav>
+        </header>
+
+        <div class="admin-acoes clientes-cabecalho">
+            <div>
+                <p class="admin-section-kicker">BASE DE CLIENTES</p>
+                <h2>Contatos dos pedidos</h2>
+            </div>
+            <div class="clientes-acoes">
+                <a class="btn-exportar-clientes" href="{{ url_for('admin_exportar_clientes', marketing='1') }}">Exportar marketing</a>
+                <strong class="clientes-total">{{ clientes|length }} clientes</strong>
+            </div>
+        </div>
+
+        <section class="admin-tabela-wrap clientes-tabela-wrap">
+            <table class="admin-tabela clientes-tabela">
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Contato</th>
+                        <th>Pedidos</th>
+                        <th>Cupons e novidades</th>
+                        <th>Última atualização</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cliente in clientes %}
+                    <tr>
+                        <td><strong>{{ cliente.nome }}</strong></td>
+                        <td>
+                            <a class="cliente-contato" href="https://wa.me/55{{ cliente.telefone }}" target="_blank" rel="noopener noreferrer">{{ cliente.telefone }}</a>
+                            {% if cliente.email %}<small>{{ cliente.email }}</small>{% endif %}
+                        </td>
+                        <td>{{ cliente.pedidos }}</td>
+                        <td>
+                            <span class="cliente-consentimento {{ 'aceito' if cliente.aceita_marketing else 'nao-aceito' }}">
+                                {{ 'Autorizado' if cliente.aceita_marketing else 'Não autorizado' }}
+                            </span>
+                        </td>
+                        <td>{{ cliente.atualizado_em }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="5">Nenhum cliente registrado ainda.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+        <p class="clientes-aviso">Use os contatos somente para a finalidade autorizada pelo cliente. Remova ou atualize o cadastro quando solicitado.</p>
+    </main>
+</body>
+</html>

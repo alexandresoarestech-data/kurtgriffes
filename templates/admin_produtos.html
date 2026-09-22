@@ -15,6 +15,7 @@
             </div>
             <nav class="admin-topo-nav">
                 <a href="{{ url_for('home') }}">Ver loja</a>
+                <a href="{{ url_for('admin_clientes') }}">Clientes</a>
                 <a href="{{ url_for('admin_conectar_drive') }}">{{ 'Drive conectado' if drive_conectado else 'Conectar Drive' }}</a>
                 <a href="{{ url_for('admin_sair') }}">Sair</a>
             </nav>

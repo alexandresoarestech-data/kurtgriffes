@@ -452,6 +452,10 @@
                     <input id="cliente-telefone" name="telefone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(11) 99999-9999" required>
                 </div>
                 <div class="checkout-campo">
+                    <label for="cliente-email">E-mail</label>
+                    <input id="cliente-email" name="email" type="email" autocomplete="email" placeholder="voce@exemplo.com">
+                </div>
+                <div class="checkout-campo">
                     <label for="tipo-entrega">Forma de entrega *</label>
                     <select id="tipo-entrega" name="entrega" required onchange="alternarCamposEntrega()">
                         <option value="">Selecione uma opção</option>
@@ -505,6 +509,10 @@
                         <option value="cartao_debito">Cartão de débito</option>
                     </select>
                 </div>
+                <label class="checkout-consentimento">
+                    <input id="aceita-marketing" name="aceita_marketing" type="checkbox">
+                    <span>Aceito receber novidades, cupons e ofertas da Kurt Griffes pelo WhatsApp.</span>
+                </label>
                 <p id="checkout-aviso" class="modal-aviso-erro"></p>
                 <button class="btn-modal-confirmar" type="submit">Revisar e enviar pedido</button>
             </form>
@@ -1093,7 +1101,7 @@
             return `KG-${dataPedido}`;
         }
 
-        document.getElementById('form-checkout').addEventListener('submit', (evento) => {
+        document.getElementById('form-checkout').addEventListener('submit', async (evento) => {
             evento.preventDefault();
             const formulario = evento.currentTarget;
             const dados = new FormData(formulario);
@@ -1157,6 +1165,39 @@
             mensagem += `*VALOR FINAL: ${valorFinal}*\n\n`;
             mensagem += 'PAGAMENTO\n';
             mensagem += `*${pagamento}: ${valorFinal}*`;
+
+            const registroPedido = {
+                numero: criarNumeroPedido(agora),
+                nome: nomeCliente,
+                telefone,
+                email: dados.get('email').trim(),
+                aceita_marketing: dados.get('aceita_marketing') === 'on',
+                tipo_entrega: tipoEntrega,
+                endereco: tipoEntrega === 'entrega' ? mensagem.split('🛵 Endereço de entrega\n')[1].split('\n\n')[0] : 'Retirada na loja',
+                pagamento,
+                subtotal,
+                total,
+                itens: carrinhoItens.map((item) => ({
+                    nome: item.nome,
+                    quantidade: item.qtd,
+                    preco: item.preco,
+                    tamanho: item.tamanho,
+                    cor: item.cor
+                }))
+            };
+
+            aviso.textContent = 'Salvando seu pedido...';
+            try {
+                const resposta = await fetch('/api/pedidos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(registroPedido)
+                });
+                if (!resposta.ok) throw new Error('Falha ao salvar pedido');
+            } catch (erro) {
+                aviso.textContent = 'Não foi possível registrar o pedido. Confira sua conexão e tente novamente.';
+                return;
+            }
 
             let numeroWhatsApp = "5511919877629";
             const url = `https://api.whatsapp.com/send?phone=${numeroWhatsApp}&text=${encodeURIComponent(mensagem)}`;

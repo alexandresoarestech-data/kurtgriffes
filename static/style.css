@@ -531,6 +531,24 @@ a {
     font-size: 12px;
 }
 
+.checkout-consentimento {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    color: #a1a1aa;
+    font-size: 12px;
+    line-height: 1.5;
+    cursor: pointer;
+}
+
+.checkout-consentimento input {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+    margin-top: 2px;
+    accent-color: var(--cor-gold);
+}
+
 .modal-fechar {
     position: absolute;
     top: 20px; right: 25px;
@@ -1703,6 +1721,18 @@ a {
         font-size: 25px;
     }
 }
+.clientes-cabecalho { margin-top: 34px; }
+.clientes-acoes { display: flex; align-items: center; gap: 16px; }
+.clientes-total { color: var(--cor-gold); font-size: 14px; }
+.btn-exportar-clientes { padding: 9px 12px; border: 1px solid rgba(212, 175, 55, .45); border-radius: 6px; color: #ecd47a; font-size: 12px; font-weight: 700; }
+.clientes-tabela-wrap { overflow-x: auto; }
+.clientes-tabela { min-width: 760px; }
+.clientes-tabela td small { display: block; margin-top: 4px; color: #8f8f98; }
+.cliente-contato { color: #f0d66d; }
+.cliente-consentimento { display: inline-block; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.cliente-consentimento.aceito { background: #123b2c; color: #bbf7d0; }
+.cliente-consentimento.nao-aceito { background: #29292d; color: #a1a1aa; }
+.clientes-aviso { margin-top: 14px; color: #777780; font-size: 12px; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
 @media (max-width: 768px) {
