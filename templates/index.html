@@ -296,16 +296,16 @@
                 <ul>
                     <li><a href="https://wa.me/5511919877629?text=Ol%C3%A1!%20Gostaria%20de%20atendimento." target="_blank">WhatsApp</a></li>
                     <li><a href="mailto:contato@kurtgriffes.com">E-mail</a></li>
-                    <li><a href="#">Trocas e devoluções</a></li>
+                    <li><a href="https://wa.me/5511919877629?text=Ol%C3%A1!%20Gostaria%20de%20solicitar%20uma%20troca%20ou%20devolu%C3%A7%C3%A3o.%20Podem%20me%20ajudar%3F" target="_blank" rel="noopener noreferrer">Trocas e devoluções</a></li>
                 </ul>
             </div>
 
             <div class="coluna-rodape">
                 <h4>Informações</h4>
                 <ul>
-                    <li><a href="#">Política de privacidade</a></li>
-                    <li><a href="#">Termos de uso</a></li>
-                    <li><a href="#">Frete e entrega</a></li>
+                    <li><a href="#" onclick="abrirInformacao('privacidade'); return false;">Política de privacidade</a></li>
+                    <li><a href="#" onclick="abrirInformacao('termos'); return false;">Termos de uso</a></li>
+                    <li><a href="#" onclick="abrirInformacao('frete'); return false;">Frete e entrega</a></li>
                 </ul>
             </div>
         </div>
@@ -522,6 +522,15 @@
                 <button type="button" class="btn-confirmacao-remover" onclick="confirmarEsvaziamentoCarrinho()">Esvaziar carrinho</button>
             </div>
         </div>
+    </div>
+
+    <div id="modal-informacao" class="modal-overlay" aria-hidden="true" onclick="fecharInformacaoSeFora(event)">
+        <article class="modal-informacao" role="dialog" aria-modal="true" aria-labelledby="informacao-titulo">
+            <button class="modal-fechar" type="button" onclick="fecharInformacao()" aria-label="Fechar">&times;</button>
+            <p class="informacao-kicker">KURT GRIFFES</p>
+            <h3 id="informacao-titulo"></h3>
+            <div id="informacao-conteudo" class="informacao-conteudo"></div>
+        </article>
     </div>
 
     <!-- SCRIPTS -->
@@ -854,6 +863,70 @@
             const modal = document.getElementById('modal-limpar-carrinho');
             modal.style.display = 'none';
             modal.setAttribute('aria-hidden', 'true');
+        }
+
+        const textosInformativos = {
+            privacidade: {
+                titulo: 'Política de privacidade',
+                conteudo: `
+                    <p>A Kurt Griffes respeita a sua privacidade e utiliza seus dados somente para atender ao seu pedido e melhorar sua experiência na loja.</p>
+                    <h4>Quais dados podem ser solicitados?</h4>
+                    <p>Durante o checkout, podemos solicitar nome, telefone, endereço e forma de pagamento. Esses dados são usados para confirmar o pedido, calcular a entrega e manter contato sobre a compra.</p>
+                    <h4>Como cuidamos das informações?</h4>
+                    <p>Não vendemos seus dados. As informações são compartilhadas apenas quando necessário para concluir o atendimento, como no contato pelo WhatsApp ou na entrega do pedido.</p>
+                    <h4>Cookies e carrinho</h4>
+                    <p>O navegador pode guardar os produtos do seu carrinho localmente para que eles continuem disponíveis quando você retornar ao site. Você pode limpar esses dados nas configurações do navegador.</p>
+                    <p>Para dúvidas ou solicitações sobre seus dados, fale conosco pelo WhatsApp ou pelo e-mail de atendimento informado no rodapé.</p>
+                `
+            },
+            termos: {
+                titulo: 'Termos de uso',
+                conteudo: `
+                    <p>Ao navegar na Kurt Griffes, você concorda com as condições abaixo. Elas existem para deixar a compra clara e segura para todos.</p>
+                    <h4>Produtos e disponibilidade</h4>
+                    <p>Fotos, cores e medidas podem apresentar pequenas diferenças por causa da iluminação e da tela utilizada. A disponibilidade e o preço são confirmados no momento do pedido.</p>
+                    <h4>Pedidos e pagamento</h4>
+                    <p>O site monta o pedido e encaminha as informações para atendimento pelo WhatsApp. A compra somente é confirmada após a conferência dos dados, disponibilidade e forma de pagamento com a equipe.</p>
+                    <h4>Uso do conteúdo</h4>
+                    <p>Textos, imagens, identidade visual e materiais da Kurt Griffes não podem ser copiados, revendidos ou utilizados comercialmente sem autorização.</p>
+                    <h4>Atendimento</h4>
+                    <p>Em caso de dúvida, erro no pedido ou necessidade de alteração, entre em contato antes do envio. Nossa equipe analisará cada caso e orientará o próximo passo.</p>
+                `
+            },
+            frete: {
+                titulo: 'Frete e entrega',
+                conteudo: `
+                    <p>O valor do frete e o prazo dependem do endereço informado, da modalidade escolhida e da disponibilidade da região.</p>
+                    <h4>Como funciona</h4>
+                    <p>No checkout, escolha entre entrega e retirada quando essa opção estiver disponível. Para entrega, informe o CEP e o endereço completo para que o atendimento possa confirmar o cálculo.</p>
+                    <h4>Prazo</h4>
+                    <p>O prazo começa a contar após a confirmação do pedido e do pagamento. Feriados, condições climáticas, transportadora e áreas de difícil acesso podem alterar a previsão.</p>
+                    <h4>Recebimento</h4>
+                    <p>Confira a embalagem no momento da entrega. Se houver avaria, violação ou divergência, registre o problema e fale conosco o quanto antes pelo WhatsApp.</p>
+                    <h4>Trocas e devoluções</h4>
+                    <p>Para solicitar uma troca ou devolução, use o link de atendimento no rodapé e informe o número do pedido, o produto e o motivo. A equipe explicará os prazos e as condições aplicáveis ao seu caso.</p>
+                `
+            }
+        };
+
+        function abrirInformacao(tipo) {
+            const informacao = textosInformativos[tipo];
+            if (!informacao) return;
+            document.getElementById('informacao-titulo').textContent = informacao.titulo;
+            document.getElementById('informacao-conteudo').innerHTML = informacao.conteudo;
+            const modal = document.getElementById('modal-informacao');
+            modal.style.display = 'flex';
+            modal.setAttribute('aria-hidden', 'false');
+        }
+
+        function fecharInformacao() {
+            const modal = document.getElementById('modal-informacao');
+            modal.style.display = 'none';
+            modal.setAttribute('aria-hidden', 'true');
+        }
+
+        function fecharInformacaoSeFora(evento) {
+            if (evento.target.id === 'modal-informacao') fecharInformacao();
         }
 
         function confirmarEsvaziamentoCarrinho() {

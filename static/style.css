@@ -1649,6 +1649,60 @@ a {
 .flash { padding: 12px 15px; border-radius: 6px; margin-bottom: 18px; }
 .flash.erro { background: #451a1a; color: #fecaca; }
 .flash.sucesso { background: #123b2c; color: #bbf7d0; }
+.modal-informacao {
+    position: relative;
+    width: min(720px, calc(100% - 32px));
+    max-height: min(82vh, 760px);
+    overflow-y: auto;
+    padding: 38px 42px 42px;
+    border: 1px solid #3a3422;
+    border-radius: 14px;
+    background: #101011;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, .75);
+}
+
+.informacao-kicker {
+    margin-bottom: 8px;
+    color: var(--cor-gold);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+
+.modal-informacao h3 {
+    margin-bottom: 22px;
+    color: #f4f4f5;
+    font-size: 30px;
+}
+
+.informacao-conteudo {
+    color: #c4c4ca;
+    font-size: 15px;
+    line-height: 1.7;
+}
+
+.informacao-conteudo p {
+    margin-bottom: 16px;
+}
+
+.informacao-conteudo h4 {
+    margin: 24px 0 6px;
+    color: #f1d46a;
+    font-size: 16px;
+}
+
+@media (max-width: 520px) {
+    .modal-informacao {
+        width: calc(100% - 24px);
+        max-height: 86vh;
+        padding: 30px 22px 26px;
+    }
+
+    .modal-informacao h3 {
+        padding-right: 28px;
+        font-size: 25px;
+    }
+}
 @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
 @media (max-width: 768px) {
