@@ -72,11 +72,12 @@ a {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: var(--cor-gold);
-    text-shadow: none;
-    font-size: 0.72em;
+    width: 42px;
+    height: 34px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 6px rgba(212, 175, 55, .35));
     margin-right: 8px;
-    transform: translateY(-2px);
+    transform: translateY(1px);
 }
 
 .icone-header {
@@ -1538,8 +1539,11 @@ a {
 .admin-login-status { color: #8f8f98; font-size: 10px; letter-spacing: .5px; white-space: nowrap; }
 .admin-login-status span { display: inline-block; width: 6px; height: 6px; margin-right: 5px; border-radius: 50%; background: #38b981; box-shadow: 0 0 9px #38b981; }
 .admin-login-marca { margin: 42px 0 15px; text-align: center; }
-.admin-coroa-moldura { display: grid; place-items: center; width: 74px; height: 74px; margin: 0 auto 14px; border: 1px solid rgba(212, 175, 55, .5); border-radius: 50%; background: rgba(212, 175, 55, .07); animation: adminCoroaPulso 4s ease-in-out infinite; }
-.admin-coroa-moldura img { width: 58px; height: 48px; object-fit: contain; }
+.admin-coroa-moldura { position: relative; display: grid; place-items: center; width: 86px; height: 86px; margin: 0 auto 14px; border: 1px solid rgba(212, 175, 55, .55); border-radius: 50%; background: radial-gradient(circle, rgba(212, 175, 55, .16), rgba(212, 175, 55, .035) 62%, transparent 63%); animation: adminCoroaPulso 4s ease-in-out infinite, adminCoroaFlutua 5s ease-in-out infinite; transition: transform .35s ease, border-color .35s ease; }
+.admin-coroa-moldura::before { position: absolute; inset: 7px; border: 1px solid rgba(248, 226, 154, .18); border-radius: 50%; content: ""; }
+.admin-coroa-moldura::after { position: absolute; top: 8px; left: 15px; width: 30px; height: 2px; border-radius: 50%; background: #fff0b7; box-shadow: 0 0 12px 3px rgba(255, 240, 183, .55); content: ""; opacity: .7; transform: rotate(-35deg); animation: adminCoroaBrilho 4.5s ease-in-out infinite; }
+.admin-coroa-moldura:hover { border-color: #f8e29a; transform: translateY(-3px) rotate(-3deg) scale(1.04); }
+.admin-coroa-moldura img { position: relative; z-index: 1; width: 64px; height: 52px; object-fit: contain; filter: drop-shadow(0 5px 8px rgba(212, 175, 55, .28)); }
 .admin-login-kicker { margin: 0 !important; color: var(--cor-gold) !important; font-size: 10px !important; font-weight: 800; letter-spacing: 3px; }
 .admin-login h1 { margin: 0; color: #fafafa; font-size: 33px; letter-spacing: -.5px; text-align: center; }
 .admin-login-descricao { margin: 9px 0 30px !important; color: #92929a !important; font-size: 14px; text-align: center; }
@@ -1560,6 +1564,8 @@ a {
 @keyframes adminOrbita { 0%, 100% { transform: translate(0, 0) rotate(0); } 50% { transform: translate(-28px, 36px) rotate(18deg); } }
 @keyframes adminReflexo { 0%, 35% { transform: translateX(-110%); } 70%, 100% { transform: translateX(110%); } }
 @keyframes adminCoroaPulso { 0%, 100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); } 50% { box-shadow: 0 0 0 8px rgba(212, 175, 55, .06); } }
+@keyframes adminCoroaFlutua { 0%, 100% { margin-top: 0; } 50% { margin-top: -4px; } }
+@keyframes adminCoroaBrilho { 0%, 42% { opacity: 0; transform: translateX(-10px) rotate(-35deg); } 55% { opacity: .85; } 72%, 100% { opacity: 0; transform: translateX(32px) rotate(-35deg); } }
 
 @media (prefers-reduced-motion: reduce) {
     .admin-login, .admin-login::before, .admin-login::after, .admin-coroa-moldura { animation: none; }
