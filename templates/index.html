@@ -532,6 +532,18 @@
         </div>
     </div>
 
+    <div id="modal-carrinho-vazio" class="modal-overlay" aria-hidden="true" onclick="fecharAvisoCarrinhoSeFora(event)">
+        <section class="modal-confirmacao-carrinho aviso-carrinho-vazio" role="dialog" aria-modal="true" aria-labelledby="carrinho-vazio-titulo">
+            <div class="confirmacao-icone carrinho-vazio-icone">+</div>
+            <p class="confirmacao-kicker">SEU CARRINHO</p>
+            <h3 id="carrinho-vazio-titulo">Ainda não há produtos</h3>
+            <p class="confirmacao-texto">Escolha uma peça da coleção para começar seu pedido.</p>
+            <div class="confirmacao-acoes">
+                <button type="button" class="btn-confirmacao-cancelar" onclick="fecharAvisoCarrinho()">Voltar à loja</button>
+            </div>
+        </section>
+    </div>
+
     <div id="modal-informacao" class="modal-overlay" aria-hidden="true" onclick="fecharInformacaoSeFora(event)">
         <article class="modal-informacao" role="dialog" aria-modal="true" aria-labelledby="informacao-titulo">
             <button class="modal-fechar" type="button" onclick="fecharInformacao()" aria-label="Fechar">&times;</button>
@@ -945,6 +957,22 @@
             fecharConfirmacaoCarrinho();
         }
 
+        function mostrarAvisoCarrinho() {
+            const modal = document.getElementById('modal-carrinho-vazio');
+            modal.style.display = 'flex';
+            modal.setAttribute('aria-hidden', 'false');
+        }
+
+        function fecharAvisoCarrinho() {
+            const modal = document.getElementById('modal-carrinho-vazio');
+            modal.style.display = 'none';
+            modal.setAttribute('aria-hidden', 'true');
+        }
+
+        function fecharAvisoCarrinhoSeFora(evento) {
+            if (evento.target.id === 'modal-carrinho-vazio') fecharAvisoCarrinho();
+        }
+
         function irParaCheckoutWhatsApp() {
             fecharModal();
             abrirCarrinhoLateral();
@@ -999,7 +1027,7 @@
 
         function finalizarCompraWhatsApp() {
             if (carrinhoItens.length === 0) {
-                alert('Seu carrinho está vazio!');
+                mostrarAvisoCarrinho();
                 return;
             }
 

@@ -1237,6 +1237,36 @@ a {
     background: #b91c1c;
 }
 
+.aviso-carrinho-vazio .confirmacao-icone {
+    border-color: rgba(212, 175, 55, .65);
+    color: var(--cor-gold);
+    font-size: 28px;
+    transform: rotate(45deg);
+}
+
+.aviso-carrinho-vazio .carrinho-vazio-icone {
+    animation: carrinhoVazioPulso 2.8s ease-in-out infinite;
+}
+
+.aviso-carrinho-vazio .confirmacao-acoes {
+    margin-top: 22px;
+}
+
+.aviso-carrinho-vazio .btn-confirmacao-cancelar {
+    border-color: rgba(212, 175, 55, .45);
+    background: rgba(212, 175, 55, .08);
+    color: #f0d878;
+}
+
+.aviso-carrinho-vazio .btn-confirmacao-cancelar:hover {
+    background: rgba(212, 175, 55, .16);
+}
+
+@keyframes carrinhoVazioPulso {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+    50% { box-shadow: 0 0 0 7px rgba(212, 175, 55, .08); }
+}
+
 .carrinho-pagamentos {
     display: flex;
     justify-content: space-between;
@@ -1740,6 +1770,54 @@ a {
 @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
 @media (max-width: 768px) {
+    .cabecalho {
+        gap: 8px;
+        padding: 10px 12px;
+    }
+
+    .cabecalho > *:first-child,
+    .cabecalho > *:nth-child(2) {
+        flex: 0 0 36px;
+    }
+
+    .logo {
+        min-width: 0;
+        max-width: calc(100% - 88px);
+        gap: 4px;
+        overflow: hidden;
+        font-size: 20px;
+        letter-spacing: 0;
+        white-space: nowrap;
+    }
+
+    .logo-coroa {
+        height: 32px;
+        max-width: 30px;
+    }
+
+    .banner-destaques {
+        min-width: 0;
+        padding: 32px 20px 42px;
+    }
+
+    .banner-slide h1 {
+        max-width: 100%;
+        font-size: clamp(29px, 10vw, 38px);
+        line-height: 1.08;
+        overflow-wrap: anywhere;
+    }
+
+    .banner-slide span {
+        display: block;
+        max-width: 100%;
+        font-size: 14px;
+        line-height: 1.45;
+    }
+
+    .banner-pontos {
+        right: 20px;
+    }
+
     .admin-shell {
         width: calc(100% - 24px);
         margin: 24px auto;
