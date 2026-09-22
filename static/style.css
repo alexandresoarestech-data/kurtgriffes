@@ -1542,7 +1542,7 @@ a {
 .admin-coroa-moldura { position: relative; display: grid; place-items: center; width: 82px; height: 82px; margin: 0 auto 14px; border: 1px solid rgba(212, 175, 55, .42); border-radius: 22px 8px 22px 8px; background: linear-gradient(145deg, rgba(212, 175, 55, .16), rgba(212, 175, 55, .025)); animation: adminCoroaFlutua 5s ease-in-out infinite; transition: transform .35s ease, border-color .35s ease, background .35s ease; }
 .admin-coroa-moldura::before { position: absolute; inset: 5px; border: 1px solid rgba(248, 226, 154, .13); border-radius: 17px 5px 17px 5px; content: ""; }
 .admin-coroa-moldura:hover { border-color: #f8e29a; background: linear-gradient(145deg, rgba(212, 175, 55, .25), rgba(212, 175, 55, .05)); transform: translateY(-3px) rotate(3deg); }
-.admin-coroa-moldura img { position: relative; z-index: 1; width: 60px; height: 60px; object-fit: contain; filter: drop-shadow(0 5px 8px rgba(212, 175, 55, .3)); animation: adminCoroaRespira 4s ease-in-out infinite; }
+.admin-coroa-moldura img { position: relative; z-index: 1; width: 68px; height: 56px; object-fit: contain; filter: drop-shadow(0 4px 7px rgba(212, 175, 55, .22)); animation: adminCoroaRespira 4s ease-in-out infinite; }
 .admin-login-kicker { margin: 0 !important; color: var(--cor-gold) !important; font-size: 10px !important; font-weight: 800; letter-spacing: 3px; }
 .admin-login h1 { margin: 0; color: #fafafa; font-size: 33px; letter-spacing: -.5px; text-align: center; }
 .admin-login-descricao { margin: 9px 0 30px !important; color: #92929a !important; font-size: 14px; text-align: center; }
