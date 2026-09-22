@@ -72,10 +72,10 @@ a {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 42px;
-    height: 34px;
+    width: 58px;
+    height: 46px;
     object-fit: contain;
-    filter: drop-shadow(0 0 6px rgba(212, 175, 55, .35));
+    filter: none;
     margin-right: 8px;
     transform: translateY(1px);
 }
