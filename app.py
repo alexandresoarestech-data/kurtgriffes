@@ -645,7 +645,7 @@ def admin_editar_produto(produto_id):
 
         with conectar_banco() as banco:
             banco.execute(
-                "UPDATE produtos SET nome = ?, categoria = ?, preco = ?, cores = ?, estoque = ?, imagens = ?, drive_imagens = ?, drive_pasta_id = ?, data_criacao = COALESCE(data_criacao, CURRENT_DATE), hora_criacao = COALESCE(hora_criacao, CURRENT_TIME) WHERE id = ?",
+                "UPDATE produtos SET nome = ?, categoria = ?, preco = ?, cores = ?, estoque = ?, imagens = ?, drive_imagens = ?, drive_pasta_id = ? WHERE id = ?",
                 (nome, categoria, preco, cores, estoque, "|".join(imagens), ids_para_json(drive_ids), drive_pasta_id, produto_id),
             )
             banco.commit()
